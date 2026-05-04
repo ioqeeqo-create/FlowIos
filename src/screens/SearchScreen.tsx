@@ -52,7 +52,7 @@ const SOURCES: { id: SearchSource; label: string }[] = [
 export function SearchScreen() {
   const insets = useSafeAreaInsets();
   const s = useFlowSettings();
-  const { playTrack } = usePlayback();
+  const { playTrack, playOrToggleTrack, openFullPlayer, toggleFavorite, isFavorite } = usePlayback();
   const titleFont = fontFamilyForId(s.fontId);
   const [fade] = useState(() => new Animated.Value(0));
 
@@ -156,6 +156,7 @@ export function SearchScreen() {
     async (track: FlowTrack) => {
       setMsg(null);
       const src = String(track.source || '').toLowerCase();
+      playOrToggleTrack(track);
       if (src === 'yandex' && !s.yandexValidated) {
         Alert.alert('', 'Нужен активный токен Яндекса.');
         return;
@@ -178,6 +179,7 @@ export function SearchScreen() {
           return;
         }
         playTrack(track, r.url);
+        openFullPlayer();
         setMsg(`Играет: ${track.title}`);
       } catch (e: unknown) {
         setMsg(e instanceof Error ? e.message : String(e));
@@ -187,6 +189,8 @@ export function SearchScreen() {
     },
     [
       playTrack,
+      playOrToggleTrack,
+      openFullPlayer,
       s.gatewayBase,
       s.gatewaySecret,
       s.vkValidated,
@@ -309,6 +313,9 @@ export function SearchScreen() {
                 </Text>
                 <Text style={styles.tSrc}>{item.source}</Text>
               </View>
+              <Pressable style={styles.likeBtn} onPress={() => toggleFavorite(item)}>
+                <Text style={styles.likeTxt}>{isFavorite(item) ? '♥' : '♡'}</Text>
+              </Pressable>
               {busy ? <ActivityIndicator color="#c084fc" /> : null}
             </Pressable>
             </LiquidGlassPanel>
@@ -432,4 +439,13 @@ const styles = StyleSheet.create({
   tTitle: { color: '#f9fafb', fontSize: 15, fontWeight: '700' },
   tArt: { color: '#9ca3af', fontSize: 13, marginTop: 2 },
   tSrc: { color: '#6b7280', fontSize: 11, marginTop: 4, textTransform: 'uppercase' },
+  likeBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.08)',
+  },
+  likeTxt: { color: '#f472b6', fontSize: 16, fontWeight: '800' },
 });

@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LiquidGlassPanel } from '../components/LiquidGlassPanel';
+import { usePlayback } from '../context/PlaybackContext';
 
 type PlaylistItem = { id: string; title: string; subtitle: string };
 
 export function LibraryScreen() {
   const insets = useSafeAreaInsets();
+  const { favorites } = usePlayback();
   const [importUrl, setImportUrl] = useState('');
   const [playlists, setPlaylists] = useState<PlaylistItem[]>([
     { id: '1', title: 'stalk ur socials', subtitle: '18 tracks' },
@@ -52,6 +54,15 @@ export function LibraryScreen() {
       </LiquidGlassPanel>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 26 }}>
+        <LiquidGlassPanel style={styles.itemCard} contentStyle={styles.itemContent}>
+          <Text style={styles.plTitle}>Любимые</Text>
+          <Text style={styles.plSub}>{favorites.length} tracks</Text>
+          {favorites.slice(0, 4).map(t => (
+            <Text key={`${t.source}:${t.id}`} style={styles.favoriteLine}>
+              ♥ {t.title} — {t.artist}
+            </Text>
+          ))}
+        </LiquidGlassPanel>
         {playlists.map(pl => (
           <LiquidGlassPanel key={pl.id} style={styles.itemCard} contentStyle={styles.itemContent}>
             <Text style={styles.plTitle}>{pl.title}</Text>
@@ -100,4 +111,5 @@ const styles = StyleSheet.create({
   itemContent: { padding: 12 },
   plTitle: { color: '#f7f4ff', fontSize: 15, fontWeight: '700' },
   plSub: { color: '#aca3c0', fontSize: 12, marginTop: 4 },
+  favoriteLine: { color: '#fbcfe8', fontSize: 11, marginTop: 4 },
 });
