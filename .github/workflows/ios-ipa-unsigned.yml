@@ -1,0 +1,68 @@
+# Сборка неподписанного .ipa для iPhone (device, arm64).
+# Артефакт подписываешь на установке (GBox / AltStore / Sideloadly) своим Apple ID.
+name: iOS unsigned IPA
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, master]
+    paths:
+      - 'ios/**'
+      - 'src/**'
+      - 'App.tsx'
+      - 'index.js'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/ios-ipa-unsigned.yml'
+
+jobs:
+  ios-ipa:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: JS deps
+        run: npm ci
+
+      - name: CocoaPods
+        working-directory: ios
+        run: pod install
+
+      - name: xcodebuild (no code signing)
+        working-directory: ios
+        run: |
+          set -e
+          xcodebuild \
+            -workspace FlowIos.xcworkspace \
+            -scheme FlowIos \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath "$GITHUB_WORKSPACE/ios-dd" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            DEVELOPMENT_TEAM="" \
+            EXPANDED_CODE_SIGN_IDENTITY=""
+
+      - name: Pack IPA
+        run: |
+          set -e
+          APP_PATH="$GITHUB_WORKSPACE/ios-dd/Build/Products/Release-iphoneos/FlowIos.app"
+          test -d "$APP_PATH"
+          OUT="$GITHUB_WORKSPACE/ios-dd/Build/Products/Release-iphoneos"
+          cd "$OUT"
+          rm -rf Payload FlowIos-unsigned.ipa
+          mkdir Payload
+          cp -R FlowIos.app Payload/
+          zip -r FlowIos-unsigned.ipa Payload
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: FlowIos-unsigned-ipa
+          path: ios-dd/Build/Products/Release-iphoneos/FlowIos-unsigned.ipa
