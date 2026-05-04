@@ -19,7 +19,7 @@ function describeNetworkError(error, url) {
   if (/abort/i.test(raw)) {
     return `Шлюз не ответил за 8 секунд: ${url}`
   }
-  return `Не удалось подключиться к шлюзу: ${url}. Проверь, что сервер запущен, порт открыт в firewall и URL доступен с iPhone.${raw ? ` (${raw})` : ''}`
+  return `Шлюз не отвечает: ${url}. На сервере запусти gateway, открой порт 3950 в firewall/панели VPS и проверь /health в Safari.${raw ? ` (${raw})` : ''}`
 }
 
 async function fetchWithTimeout(fetchImpl, url, options = {}, timeoutMs = 8000) {
