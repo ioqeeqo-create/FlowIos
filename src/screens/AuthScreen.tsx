@@ -3,10 +3,12 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LiquidGlassPanel } from '../components/LiquidGlassPanel';
 import { useSocialAuth } from '../context/SocialAuthContext';
+import { useFlowSettings } from '../context/FlowSettingsContext';
 
 export function AuthScreen() {
   const insets = useSafeAreaInsets();
   const { login, register } = useSocialAuth();
+  const { apiBase, apiToken, setApiBase, setApiToken } = useFlowSettings();
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -32,6 +34,25 @@ export function AuthScreen() {
       <Text style={styles.subtitle}>Войди как на десктопе, чтобы видеть друзей и профили.</Text>
 
       <LiquidGlassPanel style={styles.card} contentStyle={styles.cardContent}>
+        <Text style={styles.apiLabel}>Flow Social API URL</Text>
+        <TextInput
+          style={styles.input}
+          value={apiBase}
+          onChangeText={setApiBase}
+          autoCapitalize="none"
+          placeholder="http://85.239.34.229:3847"
+          placeholderTextColor="rgba(255,255,255,0.38)"
+        />
+        <Text style={styles.apiLabel}>Flow Social Bearer</Text>
+        <TextInput
+          style={styles.input}
+          value={apiToken}
+          onChangeText={setApiToken}
+          autoCapitalize="none"
+          secureTextEntry
+          placeholder="FLOW_SOCIAL_SECRET"
+          placeholderTextColor="rgba(255,255,255,0.38)"
+        />
         <View style={styles.modes}>
           <Pressable style={[styles.modeBtn, mode === 'login' && styles.modeBtnActive]} onPress={() => setMode('login')}>
             <Text style={styles.modeText}>Вход</Text>
@@ -73,6 +94,7 @@ const styles = StyleSheet.create({
   card: {},
   cardContent: { padding: 12 },
   modes: { flexDirection: 'row', gap: 8, marginBottom: 10 },
+  apiLabel: { color: '#d8b4fe', fontSize: 11, marginBottom: 4, marginTop: 3 },
   modeBtn: {
     flex: 1,
     borderRadius: 12,
