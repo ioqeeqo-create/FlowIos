@@ -41,7 +41,6 @@ export function LiquidGlassPanel({
         )}
         <View style={styles.tint} pointerEvents="none" />
         <View style={styles.topBloom} pointerEvents="none" />
-        <View style={styles.edgeGlow} pointerEvents="none" />
         {intensity === 'chrome' ? (
           <View style={styles.chromeSheen} pointerEvents="none" />
         ) : null}
@@ -80,15 +79,6 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     backgroundColor: 'rgba(255,255,255,0.16)',
     opacity: 0.7,
-  },
-  edgeGlow: {
-    position: 'absolute',
-    right: -38,
-    bottom: -36,
-    width: 130,
-    height: 130,
-    borderRadius: 65,
-    backgroundColor: 'rgba(192,132,252,0.18)',
   },
   chromeSheen: {
     position: 'absolute',

@@ -66,13 +66,14 @@ export function SocialAuthProvider({ children }: { children: React.ReactNode }) 
     };
   }, []);
 
-  const base = String(apiBase || '').trim().replace(/\/$/, '');
+  const base = String(apiBase || 'http://85.239.34.229:3847').trim().replace(/\/$/, '');
+  const bearer = String(apiToken || 'flowflow').trim();
 
   const syncProfileMedia = useCallback(
     async (u: string) => {
-      if (!base || !apiToken.trim()) return;
+      if (!base || !bearer) return;
       const res = await fetch(`${base}/flow-api/v1/profile-public/${encodeURIComponent(u)}`, {
-        headers: { Authorization: `Bearer ${apiToken.trim()}` },
+        headers: { Authorization: `Bearer ${bearer}` },
       });
       if (!res.ok) return;
       const p = (await res.json()) as {
@@ -85,19 +86,17 @@ export function SocialAuthProvider({ children }: { children: React.ReactNode }) 
         setBackgroundUri(p.banner_data);
       }
     },
-    [apiToken, base, setBackgroundUri, setBannerUri, setCoverUri],
+    [base, bearer, setBackgroundUri, setBannerUri, setCoverUri],
   );
 
   const login = useCallback(
     async (rawName: string, password: string): Promise<LoginResult> => {
       const u = normalizeUsername(rawName);
-      if (!base || !apiToken.trim()) {
-        return { ok: false, error: 'Сначала укажи Flow Social URL и Bearer в настройках' };
-      }
+      if (!base || !bearer) return { ok: false, error: 'Social API не настроен' };
       if (!u) return { ok: false, error: 'Введите username' };
       if (!password) return { ok: false, error: 'Введите пароль' };
       const r = await fetch(`${base}/flow-api/v1/profile-auth/${encodeURIComponent(u)}`, {
-        headers: { Authorization: `Bearer ${apiToken.trim()}` },
+        headers: { Authorization: `Bearer ${bearer}` },
       });
       if (r.status === 404) return { ok: false, error: 'Профиль не найден, зарегистрируйся' };
       if (!r.ok) return { ok: false, error: `Ошибка входа: ${r.status}` };
@@ -113,19 +112,17 @@ export function SocialAuthProvider({ children }: { children: React.ReactNode }) 
       await syncProfileMedia(u);
       return { ok: true };
     },
-    [apiToken, base, setSocialUsername, syncProfileMedia],
+    [base, bearer, setSocialUsername, syncProfileMedia],
   );
 
   const register = useCallback(
     async (rawName: string, password: string): Promise<LoginResult> => {
       const u = normalizeUsername(rawName);
-      if (!base || !apiToken.trim()) {
-        return { ok: false, error: 'Сначала укажи Flow Social URL и Bearer в настройках' };
-      }
+      if (!base || !bearer) return { ok: false, error: 'Social API не настроен' };
       if (!u || u.length < 3) return { ok: false, error: 'Username: минимум 3 символа' };
       if (String(password || '').length < 4) return { ok: false, error: 'Пароль: минимум 4 символа' };
       const check = await fetch(`${base}/flow-api/v1/profile-auth/${encodeURIComponent(u)}`, {
-        headers: { Authorization: `Bearer ${apiToken.trim()}` },
+        headers: { Authorization: `Bearer ${bearer}` },
       });
       if (check.ok) return { ok: false, error: 'Username уже занят' };
       const salt = randomSalt(24);
@@ -133,7 +130,7 @@ export function SocialAuthProvider({ children }: { children: React.ReactNode }) 
       const up = await fetch(`${base}/flow-api/v1/profile`, {
         method: 'PUT',
         headers: {
-          Authorization: `Bearer ${apiToken.trim()}`,
+          Authorization: `Bearer ${bearer}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -151,7 +148,7 @@ export function SocialAuthProvider({ children }: { children: React.ReactNode }) 
       await syncProfileMedia(u);
       return { ok: true };
     },
-    [apiToken, base, setSocialUsername, syncProfileMedia],
+    [base, bearer, setSocialUsername, syncProfileMedia],
   );
 
   const logout = useCallback(async () => {

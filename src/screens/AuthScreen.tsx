@@ -3,12 +3,10 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LiquidGlassPanel } from '../components/LiquidGlassPanel';
 import { useSocialAuth } from '../context/SocialAuthContext';
-import { useFlowSettings } from '../context/FlowSettingsContext';
 
 export function AuthScreen() {
   const insets = useSafeAreaInsets();
   const { login, register } = useSocialAuth();
-  const { apiBase, apiToken, setApiBase, setApiToken } = useFlowSettings();
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -29,30 +27,11 @@ export function AuthScreen() {
   };
 
   return (
-    <View style={[styles.root, { paddingTop: insets.top + 18 }]}>
-      <Text style={styles.title}>Flow Social</Text>
-      <Text style={styles.subtitle}>Войди как на десктопе, чтобы видеть друзей и профили.</Text>
-
+    <View style={[styles.root, { paddingTop: insets.top + 18, paddingBottom: insets.bottom + 14 }]}>
+      <View style={styles.centerWrap}>
       <LiquidGlassPanel style={styles.card} contentStyle={styles.cardContent}>
-        <Text style={styles.apiLabel}>Flow Social API URL</Text>
-        <TextInput
-          style={styles.input}
-          value={apiBase}
-          onChangeText={setApiBase}
-          autoCapitalize="none"
-          placeholder="http://85.239.34.229:3847"
-          placeholderTextColor="rgba(255,255,255,0.38)"
-        />
-        <Text style={styles.apiLabel}>Flow Social Bearer</Text>
-        <TextInput
-          style={styles.input}
-          value={apiToken}
-          onChangeText={setApiToken}
-          autoCapitalize="none"
-          secureTextEntry
-          placeholder="FLOW_SOCIAL_SECRET"
-          placeholderTextColor="rgba(255,255,255,0.38)"
-        />
+        <Text style={styles.logo}>Flow</Text>
+        <Text style={styles.subtitle}>Музыка вокруг тебя</Text>
         <View style={styles.modes}>
           <Pressable style={[styles.modeBtn, mode === 'login' && styles.modeBtnActive]} onPress={() => setMode('login')}>
             <Text style={styles.modeText}>Вход</Text>
@@ -83,18 +62,19 @@ export function AuthScreen() {
         </Pressable>
         {message ? <Text style={styles.err}>{message}</Text> : null}
       </LiquidGlassPanel>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, paddingHorizontal: 16, backgroundColor: 'transparent' },
-  title: { color: '#faf5ff', fontSize: 32, fontWeight: '800' },
-  subtitle: { color: '#b8afcb', fontSize: 13, marginTop: 4, marginBottom: 14 },
-  card: {},
-  cardContent: { padding: 12 },
+  root: { flex: 1, paddingHorizontal: 16, backgroundColor: 'transparent', justifyContent: 'center' },
+  centerWrap: { justifyContent: 'center' },
+  logo: { color: '#faf5ff', fontSize: 44, fontWeight: '800', textAlign: 'center', marginTop: 2 },
+  subtitle: { color: '#b8afcb', fontSize: 13, marginTop: 2, marginBottom: 14, textAlign: 'center' },
+  card: { maxWidth: 420, alignSelf: 'center', width: '100%' },
+  cardContent: { padding: 18 },
   modes: { flexDirection: 'row', gap: 8, marginBottom: 10 },
-  apiLabel: { color: '#d8b4fe', fontSize: 11, marginBottom: 4, marginTop: 3 },
   modeBtn: {
     flex: 1,
     borderRadius: 12,
@@ -127,5 +107,5 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   submitText: { color: '#fff', fontWeight: '800' },
-  err: { color: '#fca5a5', fontSize: 12, marginTop: 8 },
+  err: { color: '#fca5a5', fontSize: 12, marginTop: 8, textAlign: 'center' },
 });

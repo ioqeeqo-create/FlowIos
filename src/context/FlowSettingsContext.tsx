@@ -11,6 +11,8 @@ import type { SearchSource } from '../types/flowTrack';
 
 const DEFAULT_GATEWAY_BASE = 'http://85.239.34.229:3950';
 const DEFAULT_GATEWAY_SECRET = 'flowflow';
+const DEFAULT_SOCIAL_BASE = 'http://85.239.34.229:3847';
+const DEFAULT_SOCIAL_SECRET = 'flowflow';
 
 const K = {
   backgroundUri: 'flow:appearance:bg',
@@ -93,8 +95,8 @@ export function FlowSettingsProvider({ children }: { children: React.ReactNode }
   const [backgroundScale, setBackgroundScaleState] = useState(1);
   const [backgroundDim, setBackgroundDimState] = useState(0.4);
   const [fontId, setFontIdState] = useState('system');
-  const [apiBase, setApiBaseState] = useState('');
-  const [apiToken, setApiTokenState] = useState('');
+  const [apiBase, setApiBaseState] = useState(DEFAULT_SOCIAL_BASE);
+  const [apiToken, setApiTokenState] = useState(DEFAULT_SOCIAL_SECRET);
   const [socialUsername, setSocialUsernameState] = useState('flow');
   const [gatewayBase, setGatewayBaseState] = useState(DEFAULT_GATEWAY_BASE);
   const [gatewaySecret, setGatewaySecretState] = useState(DEFAULT_GATEWAY_SECRET);
@@ -131,7 +133,9 @@ export function FlowSettingsProvider({ children }: { children: React.ReactNode }
         }
         if (m[K.fontId]) setFontIdState(m[K.fontId]!);
         if (m[K.apiBase]) setApiBaseState(m[K.apiBase]!);
+        else setApiBaseState(DEFAULT_SOCIAL_BASE);
         if (m[K.apiToken]) setApiTokenState(m[K.apiToken]!);
+        else setApiTokenState(DEFAULT_SOCIAL_SECRET);
         if (m[K.socialUsername]) setSocialUsernameState(m[K.socialUsername]!);
         if (m[K.gatewayBase]) setGatewayBaseState(m[K.gatewayBase]!);
         if (m[K.gatewaySecret]) setGatewaySecretState(m[K.gatewaySecret]!);
