@@ -72,13 +72,19 @@ export function AppBackground({ children }: Props) {
             {
               translateX: drift.interpolate({
                 inputRange: [0, 1],
-                outputRange: [-5, 6],
+                outputRange: [-14, 16],
               }),
             },
             {
               translateY: drift.interpolate({
                 inputRange: [0, 1],
-                outputRange: [4, -5],
+                outputRange: [10, -12],
+              }),
+            },
+            {
+              rotate: drift.interpolate({
+                inputRange: [0, 1],
+                outputRange: ['-0.55deg', '0.55deg'],
               }),
             },
           ],
@@ -152,13 +158,25 @@ export function AppBackground({ children }: Props) {
               {
                 translateX: drift.interpolate({
                   inputRange: [0, 1],
-                  outputRange: [2, -3],
+                  outputRange: [10, -14],
+                }),
+              },
+              {
+                translateY: drift.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [-8, 10],
                 }),
               },
               {
                 scale: drift.interpolate({
                   inputRange: [0, 1],
-                  outputRange: [1.02, 1.06],
+                  outputRange: [1.04, 1.09],
+                }),
+              },
+              {
+                rotate: drift.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: ['0.35deg', '-0.35deg'],
                 }),
               },
             ],
