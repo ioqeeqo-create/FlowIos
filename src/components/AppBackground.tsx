@@ -7,7 +7,7 @@ type Props = {
 };
 
 export function AppBackground({ children }: Props) {
-  const { backgroundUri } = useFlowSettings();
+  const { backgroundUri, backgroundRotateDeg, backgroundScale, backgroundDim } = useFlowSettings();
 
   if (!backgroundUri) {
     return <View style={styles.solid}>{children}</View>;
@@ -17,8 +17,13 @@ export function AppBackground({ children }: Props) {
     <ImageBackground
       source={{ uri: backgroundUri }}
       style={styles.solid}
-      imageStyle={styles.image}>
-      <View style={styles.darken} />
+      imageStyle={[
+        styles.image,
+        {
+          transform: [{ scale: backgroundScale }, { rotate: `${backgroundRotateDeg}deg` }],
+        },
+      ]}>
+      <View style={[styles.darken, { backgroundColor: `rgba(0,0,0,${backgroundDim})` }]} />
       {children}
     </ImageBackground>
   );

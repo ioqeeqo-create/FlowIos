@@ -9,12 +9,16 @@ import React, {
 } from 'react';
 import type { SearchSource } from '../types/flowTrack';
 
-const DEFAULT_GATEWAY_BASE = 'http://192.168.1.5:3950';
-const DEFAULT_GATEWAY_SECRET = 'FLOW_MOBILE_GATEWAY_SECRET';
+const DEFAULT_GATEWAY_BASE = 'http://85.239.34.229:3950';
+const DEFAULT_GATEWAY_SECRET = 'flowflow';
 
 const K = {
   backgroundUri: 'flow:appearance:bg',
   coverUri: 'flow:appearance:cover',
+  bannerUri: 'flow:appearance:banner',
+  backgroundRotateDeg: 'flow:appearance:bgRotateDeg',
+  backgroundScale: 'flow:appearance:bgScale',
+  backgroundDim: 'flow:appearance:bgDim',
   fontId: 'flow:appearance:font',
   apiBase: 'flow:account:apiBase',
   apiToken: 'flow:account:apiToken',
@@ -32,6 +36,10 @@ const K = {
 export type FlowSettingsContextValue = {
   backgroundUri: string | null;
   coverUri: string | null;
+  bannerUri: string | null;
+  backgroundRotateDeg: number;
+  backgroundScale: number;
+  backgroundDim: number;
   fontId: string;
   apiBase: string;
   apiToken: string;
@@ -49,6 +57,10 @@ export type FlowSettingsContextValue = {
   hydrated: boolean;
   setBackgroundUri: (uri: string | null) => void;
   setCoverUri: (uri: string | null) => void;
+  setBannerUri: (uri: string | null) => void;
+  setBackgroundRotateDeg: (deg: number) => void;
+  setBackgroundScale: (scale: number) => void;
+  setBackgroundDim: (dim: number) => void;
   setFontId: (id: string) => void;
   setApiBase: (v: string) => void;
   setApiToken: (v: string) => void;
@@ -73,6 +85,10 @@ const KEYS = Object.values(K);
 export function FlowSettingsProvider({ children }: { children: React.ReactNode }) {
   const [backgroundUri, setBackgroundUriState] = useState<string | null>(null);
   const [coverUri, setCoverUriState] = useState<string | null>(null);
+  const [bannerUri, setBannerUriState] = useState<string | null>(null);
+  const [backgroundRotateDeg, setBackgroundRotateDegState] = useState(0);
+  const [backgroundScale, setBackgroundScaleState] = useState(1);
+  const [backgroundDim, setBackgroundDimState] = useState(0.4);
   const [fontId, setFontIdState] = useState('system');
   const [apiBase, setApiBaseState] = useState('');
   const [apiToken, setApiTokenState] = useState('');
@@ -96,6 +112,19 @@ export function FlowSettingsProvider({ children }: { children: React.ReactNode }
         const m = Object.fromEntries(KEYS.map((k, i) => [k, vals[i]]));
         if (m[K.backgroundUri]) setBackgroundUriState(m[K.backgroundUri]!);
         if (m[K.coverUri]) setCoverUriState(m[K.coverUri]!);
+        if (m[K.bannerUri]) setBannerUriState(m[K.bannerUri]!);
+        if (m[K.backgroundRotateDeg]) {
+          const v = Number(m[K.backgroundRotateDeg]);
+          if (Number.isFinite(v)) setBackgroundRotateDegState(v);
+        }
+        if (m[K.backgroundScale]) {
+          const v = Number(m[K.backgroundScale]);
+          if (Number.isFinite(v) && v >= 1 && v <= 1.4) setBackgroundScaleState(v);
+        }
+        if (m[K.backgroundDim]) {
+          const v = Number(m[K.backgroundDim]);
+          if (Number.isFinite(v) && v >= 0 && v <= 0.75) setBackgroundDimState(v);
+        }
         if (m[K.fontId]) setFontIdState(m[K.fontId]!);
         if (m[K.apiBase]) setApiBaseState(m[K.apiBase]!);
         if (m[K.apiToken]) setApiTokenState(m[K.apiToken]!);
@@ -138,6 +167,41 @@ export function FlowSettingsProvider({ children }: { children: React.ReactNode }
     (uri: string | null) => {
       setCoverUriState(uri);
       void persist(K.coverUri, uri);
+    },
+    [persist],
+  );
+
+  const setBannerUri = useCallback(
+    (uri: string | null) => {
+      setBannerUriState(uri);
+      void persist(K.bannerUri, uri);
+    },
+    [persist],
+  );
+
+  const setBackgroundRotateDeg = useCallback(
+    (deg: number) => {
+      const safe = Math.max(-25, Math.min(25, Number.isFinite(deg) ? deg : 0));
+      setBackgroundRotateDegState(safe);
+      void persist(K.backgroundRotateDeg, String(safe));
+    },
+    [persist],
+  );
+
+  const setBackgroundScale = useCallback(
+    (scale: number) => {
+      const safe = Math.max(1, Math.min(1.4, Number.isFinite(scale) ? scale : 1));
+      setBackgroundScaleState(safe);
+      void persist(K.backgroundScale, String(safe));
+    },
+    [persist],
+  );
+
+  const setBackgroundDim = useCallback(
+    (dim: number) => {
+      const safe = Math.max(0, Math.min(0.75, Number.isFinite(dim) ? dim : 0.4));
+      setBackgroundDimState(safe);
+      void persist(K.backgroundDim, String(safe));
     },
     [persist],
   );
@@ -256,10 +320,18 @@ export function FlowSettingsProvider({ children }: { children: React.ReactNode }
   const resetAppearance = useCallback(async () => {
     setBackgroundUriState(null);
     setCoverUriState(null);
+    setBannerUriState(null);
+    setBackgroundRotateDegState(0);
+    setBackgroundScaleState(1);
+    setBackgroundDimState(0.4);
     setFontIdState('system');
     await Promise.all([
       AsyncStorage.removeItem(K.backgroundUri),
       AsyncStorage.removeItem(K.coverUri),
+      AsyncStorage.removeItem(K.bannerUri),
+      AsyncStorage.removeItem(K.backgroundRotateDeg),
+      AsyncStorage.removeItem(K.backgroundScale),
+      AsyncStorage.removeItem(K.backgroundDim),
       AsyncStorage.removeItem(K.fontId),
     ]);
   }, []);
@@ -268,6 +340,10 @@ export function FlowSettingsProvider({ children }: { children: React.ReactNode }
     () => ({
       backgroundUri,
       coverUri,
+      bannerUri,
+      backgroundRotateDeg,
+      backgroundScale,
+      backgroundDim,
       fontId,
       apiBase,
       apiToken,
@@ -283,6 +359,10 @@ export function FlowSettingsProvider({ children }: { children: React.ReactNode }
       hydrated,
       setBackgroundUri,
       setCoverUri,
+      setBannerUri,
+      setBackgroundRotateDeg,
+      setBackgroundScale,
+      setBackgroundDim,
       setFontId,
       setApiBase,
       setApiToken,
@@ -301,6 +381,10 @@ export function FlowSettingsProvider({ children }: { children: React.ReactNode }
       apiBase,
       apiToken,
       backgroundUri,
+      backgroundDim,
+      backgroundRotateDeg,
+      backgroundScale,
+      bannerUri,
       coverUri,
       fontId,
       gatewayBase,
@@ -311,6 +395,10 @@ export function FlowSettingsProvider({ children }: { children: React.ReactNode }
       setApiBase,
       setApiToken,
       setBackgroundUri,
+      setBackgroundDim,
+      setBackgroundRotateDeg,
+      setBackgroundScale,
+      setBannerUri,
       setCoverUri,
       setFontId,
       setGatewayBase,

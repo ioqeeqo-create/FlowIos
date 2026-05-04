@@ -1,8 +1,9 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
+  LayoutAnimation,
   Platform,
   Pressable,
   ScrollView,
@@ -21,6 +22,10 @@ import {
 import { LiquidGlassPanel } from '../components/LiquidGlassPanel';
 import { fontFamilyForId } from '../constants/fontChoices';
 import { useFlowSettings } from '../context/FlowSettingsContext';
+
+if (Platform.OS === 'ios') {
+  LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+}
 
 async function validateFlowSocialToken(
   base: string,
@@ -57,6 +62,10 @@ export function SettingsScreen() {
   const {
     backgroundUri,
     coverUri,
+    bannerUri,
+    backgroundRotateDeg,
+    backgroundScale,
+    backgroundDim,
     fontId,
     apiBase,
     apiToken,
@@ -68,6 +77,10 @@ export function SettingsScreen() {
     soundcloudClientId,
     setBackgroundUri,
     setCoverUri,
+    setBannerUri,
+    setBackgroundRotateDeg,
+    setBackgroundScale,
+    setBackgroundDim,
     setFontId,
     setApiBase,
     setApiToken,
@@ -94,6 +107,15 @@ export function SettingsScreen() {
   const [busyGateway, setBusyGateway] = useState(false);
   const [busyY, setBusyY] = useState(false);
   const [busyV, setBusyV] = useState(false);
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({
+    appearance: true,
+    media: true,
+    blur: true,
+    profiles: true,
+    gateway: false,
+    tokens: false,
+    social: false,
+  });
 
   useEffect(() => {
     setLocalBase(apiBase);
@@ -103,10 +125,10 @@ export function SettingsScreen() {
   const titleFont = fontFamilyForId(fontId);
 
   const pickMedia = useCallback(
-    (kind: 'bg' | 'cover') => {
+    (kind: 'bg' | 'cover' | 'banner') => {
       launchImageLibrary(
         {
-          mediaType: 'photo',
+          mediaType: 'mixed',
           selectionLimit: 1,
           quality: 1,
         },
@@ -119,12 +141,18 @@ export function SettingsScreen() {
           const uri = response.assets?.[0]?.uri;
           if (!uri) return;
           if (kind === 'bg') setBackgroundUri(uri);
-          else setCoverUri(uri);
+          else if (kind === 'cover') setCoverUri(uri);
+          else setBannerUri(uri);
         },
       );
     },
-    [setBackgroundUri, setCoverUri],
+    [setBackgroundUri, setBannerUri, setCoverUri],
   );
+
+  const toggleSection = useCallback((id: string) => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setOpenSections(prev => ({ ...prev, [id]: !prev[id] }));
+  }, []);
 
   const onValidateSocial = useCallback(async () => {
     setValidateMsg(null);
@@ -219,6 +247,28 @@ export function SettingsScreen() {
     );
   }, [resetAppearance]);
 
+  const profileMocks = useMemo(
+    () => [
+      { id: '1', name: 'flowwave', sub: 'Сейчас в сети' },
+      { id: '2', name: 'stalker', sub: 'Слушает: The Weeknd' },
+      { id: '3', name: 'pixel', sub: 'Не беспокоить' },
+    ],
+    [],
+  );
+
+  const SectionHeader = ({
+    id,
+    title,
+  }: {
+    id: string;
+    title: string;
+  }) => (
+    <Pressable style={styles.foldHeader} onPress={() => toggleSection(id)}>
+      <Text style={styles.foldTitle}>{title}</Text>
+      <Text style={styles.foldArrow}>{openSections[id] ? '˅' : '›'}</Text>
+    </Pressable>
+  );
+
   return (
     <KeyboardAvoidingView
       style={[styles.root, { paddingTop: insets.top + 8 }]}
@@ -227,7 +277,7 @@ export function SettingsScreen() {
       <Text style={[styles.screenTitle, titleFont ? { fontFamily: titleFont } : null]}>
         Настройки
       </Text>
-      <Text style={styles.screenSub}>Оформление, шлюз музыки, токены, Flow Social</Text>
+      <Text style={styles.screenSub}>Liquid glass, медиа, профили, шлюз и токены.</Text>
 
       <ScrollView
         style={styles.scroll}
@@ -235,43 +285,117 @@ export function SettingsScreen() {
         keyboardShouldPersistTaps="handled"
         automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
         keyboardDismissMode="interactive">
-        <LiquidGlassPanel
-          intensity="chrome"
-          style={styles.appearanceGlass}
-          contentStyle={styles.appearanceContent}>
+        <LiquidGlassPanel intensity="chrome" style={styles.appearanceGlass} contentStyle={styles.appearanceContent}>
           <View style={styles.glassHighlight} pointerEvents="none" />
-          <Text style={styles.section}>Оформление</Text>
-          <Text style={styles.hint}>
-            Фото и GIF из галереи — фон и обложка в шапке «Моя волна».
-          </Text>
-          <View style={styles.row}>
-            <Pressable style={styles.btnGlass} onPress={() => pickMedia('bg')}>
-              <Text style={styles.btnText}>Фон экрана</Text>
-            </Pressable>
-            <Pressable style={styles.btnGlass} onPress={() => pickMedia('cover')}>
-              <Text style={styles.btnText}>Обложка</Text>
-            </Pressable>
-          </View>
-          <Text style={styles.meta}>
-            {backgroundUri ? 'Фон: да' : 'Фон: нет'} · {coverUri ? 'Обложка: да' : 'Обложка: нет'}
-          </Text>
-          <Pressable style={styles.btnDanger} onPress={onResetLook}>
-            <Text style={styles.btnDangerText}>Сбросить оформление</Text>
-          </Pressable>
+          <SectionHeader id="appearance" title="Интерфейс" />
+          {openSections.appearance ? (
+            <>
+              <Text style={styles.hint}>По умолчанию всё уже настроено под рабочий шлюз и стеклянный UI.</Text>
+              <Pressable style={styles.btnDanger} onPress={onResetLook}>
+                <Text style={styles.btnDangerText}>Сбросить оформление</Text>
+              </Pressable>
+            </>
+          ) : null}
+        </LiquidGlassPanel>
+
+        <LiquidGlassPanel intensity="chrome" style={styles.gatewayGlass} contentStyle={styles.gatewayGlassContent}>
+          <SectionHeader id="media" title="Фон и обложка" />
+          {openSections.media ? (
+            <>
+              <Text style={styles.hint}>Отдельно меняются фон, обложка профиля и баннер. Поддержка фото и GIF.</Text>
+              <View style={styles.rowWrap}>
+                <Pressable style={styles.btnGlass} onPress={() => pickMedia('bg')}>
+                  <Text style={styles.btnText}>Фон IMAGE/GIF</Text>
+                </Pressable>
+                <Pressable style={styles.btnGlass} onPress={() => setBackgroundUri(null)}>
+                  <Text style={styles.btnText}>CLEAR</Text>
+                </Pressable>
+              </View>
+              <View style={styles.rowWrap}>
+                <Pressable style={styles.btnGlass} onPress={() => pickMedia('cover')}>
+                  <Text style={styles.btnText}>Обложка IMAGE/GIF</Text>
+                </Pressable>
+                <Pressable style={styles.btnGlass} onPress={() => setCoverUri(null)}>
+                  <Text style={styles.btnText}>CLEAR</Text>
+                </Pressable>
+              </View>
+              <View style={styles.rowWrap}>
+                <Pressable style={styles.btnGlass} onPress={() => pickMedia('banner')}>
+                  <Text style={styles.btnText}>Баннер IMAGE/GIF</Text>
+                </Pressable>
+                <Pressable style={styles.btnGlass} onPress={() => setBannerUri(null)}>
+                  <Text style={styles.btnText}>CLEAR</Text>
+                </Pressable>
+              </View>
+              <Text style={styles.meta}>
+                {backgroundUri ? 'Фон: OK' : 'Фон: пусто'} · {coverUri ? 'Обложка: OK' : 'Обложка: пусто'} ·{' '}
+                {bannerUri ? 'Баннер: OK' : 'Баннер: пусто'}
+              </Text>
+            </>
+          ) : null}
+        </LiquidGlassPanel>
+
+        <LiquidGlassPanel intensity="chrome" style={styles.gatewayGlass} contentStyle={styles.gatewayGlassContent}>
+          <SectionHeader id="blur" title="Размытие и яркость" />
+          {openSections.blur ? (
+            <>
+              <Text style={styles.label}>Поворот фона: {backgroundRotateDeg.toFixed(0)}°</Text>
+              <View style={styles.rowWrap}>
+                <Pressable style={styles.btnGlass} onPress={() => setBackgroundRotateDeg(backgroundRotateDeg - 2)}>
+                  <Text style={styles.btnText}>-2°</Text>
+                </Pressable>
+                <Pressable style={styles.btnGlass} onPress={() => setBackgroundRotateDeg(backgroundRotateDeg + 2)}>
+                  <Text style={styles.btnText}>+2°</Text>
+                </Pressable>
+              </View>
+              <Text style={styles.label}>Масштаб фона: {(backgroundScale * 100).toFixed(0)}%</Text>
+              <View style={styles.rowWrap}>
+                <Pressable style={styles.btnGlass} onPress={() => setBackgroundScale(backgroundScale - 0.03)}>
+                  <Text style={styles.btnText}>-</Text>
+                </Pressable>
+                <Pressable style={styles.btnGlass} onPress={() => setBackgroundScale(backgroundScale + 0.03)}>
+                  <Text style={styles.btnText}>+</Text>
+                </Pressable>
+              </View>
+              <Text style={styles.label}>Затемнение: {(backgroundDim * 100).toFixed(0)}%</Text>
+              <View style={styles.rowWrap}>
+                <Pressable style={styles.btnGlass} onPress={() => setBackgroundDim(backgroundDim - 0.05)}>
+                  <Text style={styles.btnText}>Светлее</Text>
+                </Pressable>
+                <Pressable style={styles.btnGlass} onPress={() => setBackgroundDim(backgroundDim + 0.05)}>
+                  <Text style={styles.btnText}>Темнее</Text>
+                </Pressable>
+              </View>
+            </>
+          ) : null}
+        </LiquidGlassPanel>
+
+        <LiquidGlassPanel intensity="chrome" style={styles.gatewayGlass} contentStyle={styles.gatewayGlassContent}>
+          <SectionHeader id="profiles" title="Профили" />
+          {openSections.profiles ? (
+            <>
+              {profileMocks.map(p => (
+                <View key={p.id} style={styles.profileRow}>
+                  <View style={styles.profileAvatar} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.profileName}>{p.name}</Text>
+                    <Text style={styles.profileSub}>{p.sub}</Text>
+                  </View>
+                </View>
+              ))}
+            </>
+          ) : null}
         </LiquidGlassPanel>
 
         <LiquidGlassPanel
           intensity="chrome"
           style={styles.gatewayGlass}
           contentStyle={styles.gatewayGlassContent}>
-          <View style={styles.glassHighlight} pointerEvents="none" />
-          <Text style={styles.section}>Шлюз музыки (Node на VPS/ПК)</Text>
+          <SectionHeader id="gateway" title="Шлюз музыки (Node на VPS/ПК)" />
+          {openSections.gateway ? (
+            <>
           <Text style={styles.hint}>
-            Запуск: в папке flow_fixed —{' '}
-            <Text style={styles.mono}>
-              FLOW_MOBILE_GATEWAY_SECRET=... npm run mobile-gateway
-            </Text>
-            . URL и секрет уже вставлены по умолчанию, поменяй их под свой сервер.
+            Запуск: <Text style={styles.mono}>FLOW_MOBILE_GATEWAY_SECRET=flowflow</Text>. По умолчанию уже рабочие значения.
           </Text>
           <Text style={styles.label}>URL шлюза</Text>
           <TextInput
@@ -314,9 +438,17 @@ export function SettingsScreen() {
           {gatewayMsg === 'Шлюз доступен, секрет принят' ? (
             <Text style={styles.okBadge}>Шлюз: подключен</Text>
           ) : null}
+            </>
+          ) : null}
         </LiquidGlassPanel>
 
-        <Text style={[styles.section, { marginTop: 22 }]}>Токены источников (как в десктопе)</Text>
+        <LiquidGlassPanel
+          intensity="chrome"
+          style={styles.gatewayGlass}
+          contentStyle={styles.gatewayGlassContent}>
+          <SectionHeader id="tokens" title="Токены источников" />
+          {openSections.tokens ? (
+            <>
         <Text style={styles.label}>Spotify access token</Text>
         <TextInput
           style={styles.input}
@@ -385,8 +517,17 @@ export function SettingsScreen() {
           value={soundcloudClientId}
           onChangeText={setSoundcloudClientId}
         />
+            </>
+          ) : null}
+        </LiquidGlassPanel>
 
-        <Text style={[styles.section, { marginTop: 26 }]}>Flow Social (комнаты / друзья)</Text>
+        <LiquidGlassPanel
+          intensity="chrome"
+          style={styles.gatewayGlass}
+          contentStyle={styles.gatewayGlassContent}>
+          <SectionHeader id="social" title="Flow Social (комнаты / друзья)" />
+          {openSections.social ? (
+            <>
         <Text style={styles.hint}>
           Как в десктопе: база и FLOW_SOCIAL_SECRET. Проверка — GET …/flow-api/v1/profile-public/flow
         </Text>
@@ -420,6 +561,9 @@ export function SettingsScreen() {
           )}
         </Pressable>
         {validateMsg ? <Text style={styles.smallMsg}>{validateMsg}</Text> : null}
+            </>
+          ) : null}
+        </LiquidGlassPanel>
 
         <Text style={[styles.section, { marginTop: 26 }]}>Шрифт</Text>
         <Text style={styles.hint}>Minecraftia включён как основной шрифт всего приложения.</Text>
@@ -487,6 +631,21 @@ const styles = StyleSheet.create({
   },
   mono: { fontFamily: 'Minecraftia', fontSize: 11, color: '#d8b4fe' },
   row: { flexDirection: 'row', gap: 10 },
+  rowWrap: { flexDirection: 'row', gap: 10, marginBottom: 8 },
+  foldHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+    borderRadius: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(255,255,255,0.22)',
+  },
+  foldTitle: { color: '#f5e9ff', fontSize: 16, fontWeight: '800' },
+  foldArrow: { color: '#d8b4fe', fontSize: 20, fontWeight: '700' },
   btnGlass: {
     flex: 1,
     backgroundColor: 'rgba(255,255,255,0.08)',
@@ -506,6 +665,26 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.3)',
   },
   btnText: { color: '#e9d5ff', fontWeight: '700', fontSize: 14 },
+  profileRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    borderRadius: 14,
+    paddingVertical: 10,
+    paddingHorizontal: 10,
+    marginBottom: 8,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(255,255,255,0.22)',
+  },
+  profileAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 14,
+    backgroundColor: 'rgba(139,92,246,0.5)',
+  },
+  profileName: { color: '#faf5ff', fontSize: 14, fontWeight: '700' },
+  profileSub: { color: '#c4b5fd', fontSize: 12, marginTop: 2 },
   meta: { marginTop: 10, fontSize: 12, color: '#6b7280' },
   btnDanger: {
     marginTop: 14,
