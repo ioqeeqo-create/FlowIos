@@ -1,8 +1,6 @@
 import React from 'react';
 import {
   ImageBackground,
-  Image,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -15,28 +13,18 @@ import { useFlowSettings } from '../context/FlowSettingsContext';
 
 export function HomeScreen() {
   const insets = useSafeAreaInsets();
-  const { coverUri, bannerUri, fontId } = useFlowSettings();
+  const { bannerUri, fontId } = useFlowSettings();
   const titleFont = fontFamilyForId(fontId);
-  const profileAvatar = coverUri || 'https://i.pravatar.cc/120?img=33';
-
-  const discordProfiles = [
-    { id: '1', name: 'flowwave', status: 'Listening', color: '#22c55e' },
-    { id: '2', name: 'stalker', status: 'In social room', color: '#8b5cf6' },
-    { id: '3', name: 'reverb', status: 'AFK', color: '#f59e0b' },
-  ];
 
   const body = (
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollBody}>
       <View style={styles.headerRow}>
         <View style={{ flex: 1 }}>
           <Text style={[styles.kicker, titleFont ? { fontFamily: titleFont } : null]}>
-            Моя волна
+            Главная
           </Text>
           <Text style={styles.kickerSub}>Персональное радио</Text>
         </View>
-        <Pressable style={styles.profileBubble}>
-          <Image source={{ uri: profileAvatar }} style={styles.profileBubbleImage} />
-        </Pressable>
       </View>
 
       <LiquidGlassPanel style={styles.card} contentStyle={styles.cardContent}>
@@ -52,22 +40,8 @@ export function HomeScreen() {
         </ImageBackground>
       </LiquidGlassPanel>
 
-      <LiquidGlassPanel style={styles.profilesWrap} contentStyle={styles.profilesContent}>
-        <Text style={styles.profilesTitle}>Профили</Text>
-        {discordProfiles.map(item => (
-          <View key={item.id} style={styles.profileRow}>
-            <Image source={{ uri: profileAvatar }} style={styles.profileAvatar} />
-            <View style={{ flex: 1 }}>
-              <Text style={styles.profileName}>{item.name}</Text>
-              <Text style={styles.profileStatus}>{item.status}</Text>
-            </View>
-            <View style={[styles.profileDot, { backgroundColor: item.color }]} />
-          </View>
-        ))}
-      </LiquidGlassPanel>
       <Text style={styles.hint}>
-        Поиск и воспроизведение — вкладка «Поиск». В «Настройки» теперь можно отдельно менять фон,
-        обложку и баннер (включая GIF), а также крутить фон.
+        Поиск и воспроизведение — вкладка «Поиск». Профили и друзья перенесены во вкладку «Соц».
       </Text>
     </ScrollView>
   );
@@ -95,15 +69,6 @@ const styles = StyleSheet.create({
     gap: 14,
     marginBottom: 22,
   },
-  profileBubble: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.4)',
-    overflow: 'hidden',
-  },
-  profileBubbleImage: { width: '100%', height: '100%' },
   kicker: {
     fontSize: 22,
     fontWeight: '800',
@@ -139,50 +104,6 @@ const styles = StyleSheet.create({
     marginTop: 6,
     fontSize: 14,
     color: '#c4b5fd',
-  },
-  profilesWrap: {
-    marginTop: 14,
-  },
-  profilesContent: {
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-  },
-  profilesTitle: {
-    fontSize: 13,
-    color: '#c4b5fd',
-    marginBottom: 8,
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
-  },
-  profileRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    borderRadius: 14,
-    paddingVertical: 10,
-    paddingHorizontal: 8,
-    backgroundColor: 'rgba(255,255,255,0.04)',
-    marginBottom: 8,
-  },
-  profileAvatar: {
-    width: 42,
-    height: 42,
-    borderRadius: 14,
-  },
-  profileName: {
-    color: '#faf5ff',
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  profileStatus: {
-    color: '#a1a1b0',
-    fontSize: 12,
-    marginTop: 1,
-  },
-  profileDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
   },
   hint: {
     marginTop: 20,

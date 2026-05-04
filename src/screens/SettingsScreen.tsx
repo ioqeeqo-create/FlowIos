@@ -69,6 +69,7 @@ export function SettingsScreen() {
     fontId,
     apiBase,
     apiToken,
+    socialUsername,
     gatewayBase,
     gatewaySecret,
     spotifyToken,
@@ -84,6 +85,7 @@ export function SettingsScreen() {
     setFontId,
     setApiBase,
     setApiToken,
+    setSocialUsername,
     setGatewayBase,
     setGatewaySecret,
     setSpotifyToken,
@@ -99,6 +101,7 @@ export function SettingsScreen() {
 
   const [localBase, setLocalBase] = useState(apiBase);
   const [localToken, setLocalToken] = useState(apiToken);
+  const [localSocialUsername, setLocalSocialUsername] = useState(socialUsername);
   const [validating, setValidating] = useState(false);
   const [validateMsg, setValidateMsg] = useState<string | null>(null);
   const [valYandexMsg, setValYandexMsg] = useState<string | null>(null);
@@ -120,7 +123,8 @@ export function SettingsScreen() {
   useEffect(() => {
     setLocalBase(apiBase);
     setLocalToken(apiToken);
-  }, [apiBase, apiToken]);
+    setLocalSocialUsername(socialUsername);
+  }, [apiBase, apiToken, socialUsername]);
 
   const titleFont = fontFamilyForId(fontId);
 
@@ -158,6 +162,7 @@ export function SettingsScreen() {
     setValidateMsg(null);
     setApiBase(localBase);
     setApiToken(localToken);
+    setSocialUsername(localSocialUsername);
     setValidating(true);
     try {
       const r = await validateFlowSocialToken(localBase, localToken);
@@ -168,7 +173,7 @@ export function SettingsScreen() {
     } finally {
       setValidating(false);
     }
-  }, [localBase, localToken, setApiBase, setApiToken]);
+  }, [localBase, localSocialUsername, localToken, setApiBase, setApiToken, setSocialUsername]);
 
   const onCheckGateway = useCallback(async () => {
     setGatewayMsg(null);
@@ -550,6 +555,15 @@ export function SettingsScreen() {
           value={localToken}
           onChangeText={setLocalToken}
         />
+        <Text style={styles.label}>Мой username (для вкладки Соц)</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="flow"
+          placeholderTextColor="#6b7280"
+          autoCapitalize="none"
+          value={localSocialUsername}
+          onChangeText={setLocalSocialUsername}
+        />
         <Pressable
           style={[styles.btnPrimary, validating && styles.btnDisabled]}
           onPress={onValidateSocial}
@@ -726,13 +740,15 @@ const styles = StyleSheet.create({
   },
   btnPrimary: {
     marginTop: 12,
-    backgroundColor: '#c084fc',
+    backgroundColor: 'rgba(192,132,252,0.28)',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(255,255,255,0.38)',
     borderRadius: 14,
     paddingVertical: 14,
     alignItems: 'center',
   },
   btnDisabled: { opacity: 0.65 },
-  btnPrimaryText: { color: '#0a0a12', fontWeight: '800', fontSize: 15 },
+  btnPrimaryText: { color: '#f8f5ff', fontWeight: '800', fontSize: 15 },
   helpBtn: {
     marginTop: 10,
     alignSelf: 'flex-start',

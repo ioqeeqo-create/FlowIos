@@ -14,15 +14,16 @@ import {
   TabIconSocial,
 } from './TabNavIcons';
 import { HomeScreen } from '../screens/HomeScreen';
-import { PlaceholderScreen } from '../screens/PlaceholderScreen';
+import { LibraryScreen } from '../screens/LibraryScreen';
 import { SearchScreen } from '../screens/SearchScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
+import { SocialScreen } from '../screens/SocialScreen';
 
 const Tab = createBottomTabNavigator();
 
 const TAB_ORDER = ['Wave', 'Search', 'Library', 'Social', 'Settings'];
 const TAB_LABELS: Record<string, string> = {
-  Wave: 'Моя волна',
+  Wave: 'Главная',
   Search: 'Поиск',
   Library: 'Библиотека',
   Social: 'Соц.',
@@ -260,7 +261,7 @@ export function RootTabs() {
           name="Wave"
           component={HomeScreen}
           options={{
-            tabBarLabel: 'Моя волна',
+            tabBarLabel: 'Главная',
             tabBarIcon: ({ color, focused }) =>
               tabSlot(focused, <TabIconHome color={color} focused={focused} />),
           }}
@@ -276,8 +277,7 @@ export function RootTabs() {
         />
         <Tab.Screen
           name="Library"
-          component={PlaceholderScreen}
-          initialParams={{ title: 'Библиотека', subtitle: 'Плейлисты и импорт' }}
+          component={LibraryScreen}
           options={{
             tabBarLabel: 'Библиотека',
             tabBarIcon: ({ color, focused }) =>
@@ -286,8 +286,7 @@ export function RootTabs() {
         />
         <Tab.Screen
           name="Social"
-          component={PlaceholderScreen}
-          initialParams={{ title: 'Социальное', subtitle: 'Комнаты и друзья' }}
+          component={SocialScreen}
           options={{
             tabBarLabel: 'Соц.',
             tabBarIcon: ({ color, focused }) =>

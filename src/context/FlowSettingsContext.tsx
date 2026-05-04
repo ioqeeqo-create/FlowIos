@@ -22,6 +22,7 @@ const K = {
   fontId: 'flow:appearance:font',
   apiBase: 'flow:account:apiBase',
   apiToken: 'flow:account:apiToken',
+  socialUsername: 'flow:account:socialUsername',
   gatewayBase: 'flow:music:gatewayBase',
   gatewaySecret: 'flow:music:gatewaySecret',
   spotifyToken: 'flow:music:spotify',
@@ -43,6 +44,7 @@ export type FlowSettingsContextValue = {
   fontId: string;
   apiBase: string;
   apiToken: string;
+  socialUsername: string;
   gatewayBase: string;
   gatewaySecret: string;
   spotifyToken: string;
@@ -64,6 +66,7 @@ export type FlowSettingsContextValue = {
   setFontId: (id: string) => void;
   setApiBase: (v: string) => void;
   setApiToken: (v: string) => void;
+  setSocialUsername: (v: string) => void;
   setGatewayBase: (v: string) => void;
   setGatewaySecret: (v: string) => void;
   setSpotifyToken: (v: string) => void;
@@ -92,6 +95,7 @@ export function FlowSettingsProvider({ children }: { children: React.ReactNode }
   const [fontId, setFontIdState] = useState('system');
   const [apiBase, setApiBaseState] = useState('');
   const [apiToken, setApiTokenState] = useState('');
+  const [socialUsername, setSocialUsernameState] = useState('flow');
   const [gatewayBase, setGatewayBaseState] = useState(DEFAULT_GATEWAY_BASE);
   const [gatewaySecret, setGatewaySecretState] = useState(DEFAULT_GATEWAY_SECRET);
   const [spotifyToken, setSpotifyTokenState] = useState('');
@@ -128,6 +132,7 @@ export function FlowSettingsProvider({ children }: { children: React.ReactNode }
         if (m[K.fontId]) setFontIdState(m[K.fontId]!);
         if (m[K.apiBase]) setApiBaseState(m[K.apiBase]!);
         if (m[K.apiToken]) setApiTokenState(m[K.apiToken]!);
+        if (m[K.socialUsername]) setSocialUsernameState(m[K.socialUsername]!);
         if (m[K.gatewayBase]) setGatewayBaseState(m[K.gatewayBase]!);
         if (m[K.gatewaySecret]) setGatewaySecretState(m[K.gatewaySecret]!);
         if (m[K.spotifyToken]) setSpotifyTokenState(m[K.spotifyToken]!);
@@ -226,6 +231,15 @@ export function FlowSettingsProvider({ children }: { children: React.ReactNode }
     (v: string) => {
       setApiTokenState(v);
       void persist(K.apiToken, v.trim() || null);
+    },
+    [persist],
+  );
+
+  const setSocialUsername = useCallback(
+    (v: string) => {
+      const safe = String(v || '').trim().toLowerCase();
+      setSocialUsernameState(safe || 'flow');
+      void persist(K.socialUsername, safe || 'flow');
     },
     [persist],
   );
@@ -347,6 +361,7 @@ export function FlowSettingsProvider({ children }: { children: React.ReactNode }
       fontId,
       apiBase,
       apiToken,
+      socialUsername,
       gatewayBase,
       gatewaySecret,
       spotifyToken,
@@ -366,6 +381,7 @@ export function FlowSettingsProvider({ children }: { children: React.ReactNode }
       setFontId,
       setApiBase,
       setApiToken,
+      setSocialUsername,
       setGatewayBase,
       setGatewaySecret,
       setSpotifyToken,
@@ -380,6 +396,7 @@ export function FlowSettingsProvider({ children }: { children: React.ReactNode }
     [
       apiBase,
       apiToken,
+      socialUsername,
       backgroundUri,
       backgroundDim,
       backgroundRotateDeg,
@@ -394,6 +411,7 @@ export function FlowSettingsProvider({ children }: { children: React.ReactNode }
       searchSource,
       setApiBase,
       setApiToken,
+      setSocialUsername,
       setBackgroundUri,
       setBackgroundDim,
       setBackgroundRotateDeg,
