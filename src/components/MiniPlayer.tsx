@@ -1,48 +1,88 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  Animated,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+import { LiquidGlassPanel } from './LiquidGlassPanel';
 import { usePlayback } from '../context/PlaybackContext';
 
 export function MiniPlayer() {
   const { current, playing, togglePlay, stop, error } = usePlayback();
+  const appear = React.useRef(new Animated.Value(0.92)).current;
+  const fade = React.useRef(new Animated.Value(0)).current;
+
+  React.useEffect(() => {
+    if (!current) return;
+    appear.setValue(0.92);
+    fade.setValue(0);
+    Animated.parallel([
+      Animated.spring(appear, {
+        toValue: 1,
+        useNativeDriver: true,
+        damping: 16,
+        stiffness: 170,
+      }),
+      Animated.timing(fade, {
+        toValue: 1,
+        duration: 220,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [appear, current, fade]);
 
   if (!current) return null;
 
   return (
-    <View style={styles.wrap}>
-      {error ? <Text style={styles.err}>{error}</Text> : null}
-      <View style={styles.sep} />
-      <View style={styles.row}>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.title} numberOfLines={1}>
-            {current.title}
-          </Text>
-          <Text style={styles.art} numberOfLines={1}>
-            {current.artist} · {current.source}
-          </Text>
+    <Animated.View
+      style={[
+        styles.animated,
+        {
+          opacity: fade,
+          transform: [{ scale: appear }],
+        },
+      ]}>
+      <LiquidGlassPanel
+        borderRadius={20}
+        intensity="chrome"
+        style={styles.panel}
+        contentStyle={styles.wrap}>
+        {error ? <Text style={styles.err}>{error}</Text> : null}
+        <View style={styles.row}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.title} numberOfLines={1}>
+              {current.title}
+            </Text>
+            <Text style={styles.art} numberOfLines={1}>
+              {current.artist} · {current.source}
+            </Text>
+          </View>
+          <Pressable style={styles.btn} onPress={togglePlay}>
+            <Text style={styles.btnTxt}>{playing ? '❚❚' : '▶'}</Text>
+          </Pressable>
+          <Pressable style={styles.btn} onPress={stop}>
+            <Text style={styles.btnTxt}>■</Text>
+          </Pressable>
         </View>
-        <Pressable style={styles.btn} onPress={togglePlay}>
-          <Text style={styles.btnTxt}>{playing ? '❚❚' : '▶'}</Text>
-        </Pressable>
-        <Pressable style={styles.btn} onPress={stop}>
-          <Text style={styles.btnTxt}>■</Text>
-        </Pressable>
-      </View>
-    </View>
+      </LiquidGlassPanel>
+    </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
-  wrap: {
-    backgroundColor: 'transparent',
-    paddingHorizontal: 14,
-    paddingTop: 6,
+  animated: {
+    paddingHorizontal: 10,
+    paddingTop: 8,
     paddingBottom: 4,
   },
-  sep: {
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    marginBottom: 8,
-    marginHorizontal: -4,
+  panel: {
+    backgroundColor: 'transparent',
+  },
+  wrap: {
+    paddingHorizontal: 14,
+    paddingVertical: 10,
   },
   err: { color: '#fca5a5', fontSize: 11, marginBottom: 6 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 10 },

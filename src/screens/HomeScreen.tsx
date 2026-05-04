@@ -1,7 +1,6 @@
 import React from 'react';
 import {
   Image,
-  ImageBackground,
   StyleSheet,
   Text,
   View,
@@ -13,7 +12,7 @@ import { useFlowSettings } from '../context/FlowSettingsContext';
 
 export function HomeScreen() {
   const insets = useSafeAreaInsets();
-  const { backgroundUri, coverUri, fontId } = useFlowSettings();
+  const { coverUri, fontId } = useFlowSettings();
   const titleFont = fontFamilyForId(fontId);
 
   const body = (
@@ -45,17 +44,6 @@ export function HomeScreen() {
     </>
   );
 
-  if (backgroundUri) {
-    return (
-      <ImageBackground
-        source={{ uri: backgroundUri }}
-        style={[styles.flex, { paddingTop: insets.top + 12 }]}
-        imageStyle={styles.bgDim}>
-        <View style={styles.overlay}>{body}</View>
-      </ImageBackground>
-    );
-  }
-
   return (
     <View style={[styles.flex, styles.solid, { paddingTop: insets.top + 12 }]}>
       {body}
@@ -66,14 +54,7 @@ export function HomeScreen() {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   solid: {
-    backgroundColor: '#07070d',
-  },
-  bgDim: {
-    opacity: 0.45,
-  },
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(7,7,13,0.72)',
+    backgroundColor: 'transparent',
     paddingHorizontal: 20,
     paddingBottom: 24,
   },

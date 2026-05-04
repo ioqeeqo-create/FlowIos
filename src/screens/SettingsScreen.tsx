@@ -23,6 +23,31 @@ import { LiquidGlassPanel } from '../components/LiquidGlassPanel';
 import { FONT_CHOICES, fontFamilyForId } from '../constants/fontChoices';
 import { useFlowSettings } from '../context/FlowSettingsContext';
 
+function GlassWave() {
+  return (
+    <Svg
+      width="100%"
+      height={74}
+      viewBox="0 0 360 74"
+      preserveAspectRatio="none"
+      style={styles.glassWave}
+      pointerEvents="none">
+      <Defs>
+        <LinearGradient id="settingsGlassWave" x1="0" y1="0" x2="1" y2="0">
+          <Stop offset="0" stopColor="#ffffff" stopOpacity="0.38" />
+          <Stop offset="0.55" stopColor="#ffffff" stopOpacity="0.1" />
+          <Stop offset="1" stopColor="#ffffff" stopOpacity="0.28" />
+        </LinearGradient>
+      </Defs>
+      <Path
+        d="M0 0 H360 C338 43 292 54 222 44 C143 32 81 64 0 38 Z"
+        fill="url(#settingsGlassWave)"
+        opacity="0.62"
+      />
+    </Svg>
+  );
+}
+
 async function validateFlowSocialToken(
   base: string,
   token: string,
@@ -453,7 +478,7 @@ export function SettingsScreen() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: '#07070d',
+    backgroundColor: 'transparent',
     paddingHorizontal: 18,
   },
   screenTitle: {
@@ -468,6 +493,19 @@ const styles = StyleSheet.create({
     color: '#9ca3af',
   },
   scroll: { flex: 1 },
+  glassWave: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+  },
+  appearanceGlass: {
+    marginTop: 8,
+    marginBottom: 24,
+  },
+  appearanceContent: {
+    padding: 16,
+  },
   gatewayGlass: {
     marginTop: 26,
     marginBottom: 2,
@@ -489,16 +527,25 @@ const styles = StyleSheet.create({
     color: '#9ca3af',
     marginBottom: 12,
   },
-  mono: { fontFamily: 'Menlo', fontSize: 11, color: '#d8b4fe' },
+  mono: { fontFamily: 'Minecraftia', fontSize: 11, color: '#d8b4fe' },
   row: { flexDirection: 'row', gap: 10 },
-  btn: {
+  btnGlass: {
     flex: 1,
-    backgroundColor: '#151520',
+    backgroundColor: 'rgba(255,255,255,0.08)',
     borderRadius: 14,
     paddingVertical: 14,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#2e2e42',
+    borderWidth: 0.5,
+    borderColor: 'rgba(255,255,255,0.3)',
+  },
+  btn: {
+    flex: 1,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderRadius: 14,
+    paddingVertical: 14,
+    alignItems: 'center',
+    borderWidth: 0.5,
+    borderColor: 'rgba(255,255,255,0.3)',
   },
   btnText: { color: '#e9d5ff', fontWeight: '700', fontSize: 14 },
   meta: { marginTop: 10, fontSize: 12, color: '#6b7280' },
@@ -549,6 +596,17 @@ const styles = StyleSheet.create({
   },
   btnDisabled: { opacity: 0.65 },
   btnPrimaryText: { color: '#0a0a12', fontWeight: '800', fontSize: 15 },
+  helpBtn: {
+    marginTop: 10,
+    alignSelf: 'flex-start',
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderWidth: 0.5,
+    borderColor: 'rgba(255,255,255,0.3)',
+  },
+  helpBtnText: { color: '#f5e9ff', fontWeight: '800', fontSize: 12 },
   smallMsg: {
     marginTop: 8,
     fontSize: 13,
