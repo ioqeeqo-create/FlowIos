@@ -11,7 +11,7 @@ import Svg, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LiquidGlassPanel } from './LiquidGlassPanel';
 
-const R = 26;
+const R = 40;
 const TAB_COUNT = 5;
 
 type Props = {
@@ -30,7 +30,7 @@ export function GlassDock({ children, activeIndex = 0 }: Props) {
 
   if (Platform.OS === 'ios') {
     return (
-      <View style={[styles.iosWrap, { marginBottom: bottom - 2 }]}>
+      <View style={[styles.iosWrap, { marginBottom: bottom + 12 }]}>
         <LiquidGlassPanel
           borderRadius={R}
           intensity="chrome"
@@ -133,7 +133,7 @@ export function GlassDock({ children, activeIndex = 0 }: Props) {
 
 const styles = StyleSheet.create({
   iosWrap: {
-    marginHorizontal: 11,
+    marginHorizontal: 24,
     backgroundColor: 'transparent',
     overflow: 'visible',
   },

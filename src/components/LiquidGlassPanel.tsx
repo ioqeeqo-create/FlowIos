@@ -33,7 +33,7 @@ export function LiquidGlassPanel({
           <BlurView
             style={StyleSheet.absoluteFill}
             blurType="thinMaterialDark"
-            blurAmount={intensity === 'chrome' ? 32 : 25}
+            blurAmount={intensity === 'chrome' ? 38 : 25}
             reducedTransparencyFallbackColor="#151521"
           />
         ) : (
