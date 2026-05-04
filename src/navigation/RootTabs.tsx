@@ -22,6 +22,8 @@ const Tab = createBottomTabNavigator();
 
 type TabBarComponentProps = ComponentProps<typeof BottomTabBar>;
 
+const TAB_ORDER = ['Wave', 'Search', 'Library', 'Social', 'Settings'];
+
 const NavTheme = {
   ...DefaultTheme,
   colors: {
@@ -61,8 +63,10 @@ export function RootTabs() {
       ],
     } satisfies TabBarComponentProps;
 
+    const activeIndex = TAB_ORDER.indexOf(String(props.state.routes[props.state.index]?.name));
+
     return (
-      <GlassDock>
+      <GlassDock activeIndex={activeIndex < 0 ? props.state.index : activeIndex}>
         <MiniPlayer />
         <BottomTabBar {...barProps} />
       </GlassDock>
@@ -80,8 +84,8 @@ export function RootTabs() {
             borderTopWidth: 0,
             elevation: 0,
           },
-          tabBarActiveTintColor: '#c084fc',
-          tabBarInactiveTintColor: '#6b6b80',
+          tabBarActiveTintColor: '#f6efff',
+          tabBarInactiveTintColor: 'rgba(214,205,230,0.54)',
           tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
         }}>
         <Tab.Screen
@@ -144,11 +148,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  tabGlyphWrapActive: {
-    backgroundColor: 'rgba(236, 72, 153, 0.18)',
-    shadowColor: '#ec4899',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.45,
-    shadowRadius: 8,
-  },
+  tabGlyphWrapActive: {},
 });

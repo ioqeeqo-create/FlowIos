@@ -14,6 +14,30 @@ function normalizeGatewayBase(raw) {
   return s.replace(/\/$/, '')
 }
 
+function describeNetworkError(error, url) {
+  const raw = error && error.message ? String(error.message) : String(error || '')
+  if (/abort/i.test(raw)) {
+    return `Шлюз не ответил за 8 секунд: ${url}`
+  }
+  return `Не удалось подключиться к шлюзу: ${url}. Проверь, что сервер запущен, порт открыт в firewall и URL доступен с iPhone.${raw ? ` (${raw})` : ''}`
+}
+
+async function fetchWithTimeout(fetchImpl, url, options = {}, timeoutMs = 8000) {
+  if (typeof AbortController !== 'function') {
+    return fetchImpl(url, options)
+  }
+  const controller = new AbortController()
+  const t = setTimeout(() => controller.abort(), timeoutMs)
+  try {
+    return await fetchImpl(url, {
+      ...options,
+      signal: controller.signal,
+    })
+  } finally {
+    clearTimeout(t)
+  }
+}
+
 /**
  * @param {{ baseUrl: string, secret: string, fetch?: typeof fetch }} cfg
  */
@@ -27,7 +51,7 @@ function createFlowGatewayClient(cfg) {
 
   async function post(path, body) {
     const url = `${base.replace(/\/$/, '')}${path}`
-    return fetchImpl(url, {
+    return fetchWithTimeout(fetchImpl, url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -46,9 +70,14 @@ function createFlowGatewayClient(cfg) {
     /** GET /health — без Bearer. */
     async health() {
       if (!base) return { ok: false, error: 'Пустой baseUrl' }
-      const r = await fetchImpl(`${base}/health`, { method: 'GET' })
-      const j = await r.json().catch(() => ({}))
-      return { ok: r.ok && j.ok === true, status: r.status, body: j }
+      const url = `${base}/health`
+      try {
+        const r = await fetchWithTimeout(fetchImpl, url, { method: 'GET' })
+        const j = await r.json().catch(() => ({}))
+        return { ok: r.ok && j.ok === true, status: r.status, body: j }
+      } catch (e) {
+        return { ok: false, error: describeNetworkError(e, url) }
+      }
     },
 
     async checkSecret() {
@@ -67,7 +96,17 @@ function createFlowGatewayClient(cfg) {
         q: '__flow_gateway_check__',
         source: 'audius',
         tokens: {},
-      })
+      }).catch(e => ({ networkError: e }))
+      if (r.networkError) {
+        return {
+          ok: false,
+          message: describeNetworkError(
+            r.networkError,
+            `${base}/mobile/v1/search`,
+          ),
+          health,
+        }
+      }
       const j = await r.json().catch(() => ({}))
       if (r.ok) {
         return {

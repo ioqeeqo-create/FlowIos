@@ -11,6 +11,7 @@ import { BlurView } from '@react-native-community/blur';
 type Props = {
   children: React.ReactNode;
   borderRadius?: number;
+  intensity?: 'panel' | 'chrome';
   style?: StyleProp<ViewStyle>;
   contentStyle?: StyleProp<ViewStyle>;
 };
@@ -18,6 +19,7 @@ type Props = {
 export function LiquidGlassPanel({
   children,
   borderRadius = 24,
+  intensity = 'panel',
   style,
   contentStyle,
 }: Props) {
@@ -30,7 +32,7 @@ export function LiquidGlassPanel({
           <BlurView
             style={StyleSheet.absoluteFill}
             blurType="thinMaterialDark"
-            blurAmount={54}
+            blurAmount={intensity === 'chrome' ? 72 : 54}
             reducedTransparencyFallbackColor="#151521"
           />
         ) : (
@@ -39,6 +41,9 @@ export function LiquidGlassPanel({
         <View style={styles.tint} pointerEvents="none" />
         <View style={styles.topBloom} pointerEvents="none" />
         <View style={styles.edgeGlow} pointerEvents="none" />
+        {intensity === 'chrome' ? (
+          <View style={styles.chromeSheen} pointerEvents="none" />
+        ) : null}
         <View style={[styles.border, radiusStyle]} pointerEvents="none" />
         <View style={contentStyle}>{children}</View>
       </View>
@@ -84,9 +89,18 @@ const styles = StyleSheet.create({
     borderRadius: 65,
     backgroundColor: 'rgba(192,132,252,0.18)',
   },
+  chromeSheen: {
+    position: 'absolute',
+    top: 8,
+    left: 28,
+    right: 28,
+    height: 1,
+    borderRadius: 999,
+    backgroundColor: 'rgba(255,255,255,0.42)',
+  },
   border: {
     ...StyleSheet.absoluteFillObject,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255,255,255,0.22)',
+    borderColor: 'rgba(255,255,255,0.28)',
   },
 });

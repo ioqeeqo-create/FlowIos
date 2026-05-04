@@ -85,8 +85,18 @@ export async function gatewayCheck(
   if (!base) return { ok: false, message: 'Нет URL шлюза' };
   if (!gatewaySecret.trim()) return { ok: false, message: 'Нет секрета шлюза' };
 
-  const r = await gw(gatewayBase, gatewaySecret).checkSecret();
-  return { ok: r.ok, message: r.message };
+  try {
+    const r = await gw(gatewayBase, gatewaySecret).checkSecret();
+    return { ok: r.ok, message: r.message };
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : String(e);
+    return {
+      ok: false,
+      message:
+        `Шлюз недоступен: ${msg}. ` +
+        'Проверь, что сервер запущен, порт 3950 открыт в firewall, а URL доступен с iPhone.',
+    };
+  }
 }
 
 /** Простукивание при старте (шлюз + опционально Яндекс/VK). */
