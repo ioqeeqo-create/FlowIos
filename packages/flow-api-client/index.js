@@ -51,6 +51,38 @@ function createFlowGatewayClient(cfg) {
       return { ok: r.ok && j.ok === true, status: r.status, body: j }
     },
 
+    async checkSecret() {
+      if (!base) return { ok: false, message: 'Нет URL шлюза' }
+      if (!secret) return { ok: false, message: 'Нет секрета шлюза' }
+      const health = await this.health()
+      if (!health.ok) {
+        return {
+          ok: false,
+          message: health.error || `Health HTTP ${health.status || '?'}`,
+          health,
+        }
+      }
+
+      const r = await post('/mobile/v1/search', {
+        q: '__flow_gateway_check__',
+        source: 'audius',
+        tokens: {},
+      })
+      const j = await r.json().catch(() => ({}))
+      if (r.ok) {
+        return {
+          ok: true,
+          message: 'Шлюз доступен, секрет принят',
+          health,
+        }
+      }
+      return {
+        ok: false,
+        message: j.error || `Секрет не принят: HTTP ${r.status}`,
+        health,
+      }
+    },
+
     async search(q, source, tokens = {}) {
       if (!base || !secret) {
         return { ok: false, tracks: [], error: 'Нет baseUrl или secret' }

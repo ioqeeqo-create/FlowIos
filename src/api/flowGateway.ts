@@ -77,6 +77,18 @@ export async function gatewayValidateVk(
   return gw(gatewayBase, gatewaySecret).validateVk(vkToken);
 }
 
+export async function gatewayCheck(
+  gatewayBase: string,
+  gatewaySecret: string,
+): Promise<{ ok: boolean; message: string }> {
+  const base = normalizeGatewayBaseImpl(gatewayBase);
+  if (!base) return { ok: false, message: 'Нет URL шлюза' };
+  if (!gatewaySecret.trim()) return { ok: false, message: 'Нет секрета шлюза' };
+
+  const r = await gw(gatewayBase, gatewaySecret).checkSecret();
+  return { ok: r.ok, message: r.message };
+}
+
 /** Простукивание при старте (шлюз + опционально Яндекс/VK). */
 export async function gatewayProbeSavedTokens(
   gatewayBase: string,

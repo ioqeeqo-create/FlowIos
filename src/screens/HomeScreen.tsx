@@ -7,6 +7,7 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { LiquidGlassPanel } from '../components/LiquidGlassPanel';
 import { fontFamilyForId } from '../constants/fontChoices';
 import { useFlowSettings } from '../context/FlowSettingsContext';
 
@@ -32,12 +33,12 @@ export function HomeScreen() {
           <Text style={styles.kickerSub}>Персональное радио</Text>
         </View>
       </View>
-      <View style={styles.card}>
+      <LiquidGlassPanel style={styles.card} contentStyle={styles.cardContent}>
         <Text style={[styles.cardTitle, titleFont ? { fontFamily: titleFont } : null]}>
           Flow
         </Text>
         <Text style={styles.cardSub}>music for your wave</Text>
-      </View>
+      </LiquidGlassPanel>
       <Text style={styles.hint}>
         Поиск и воспроизведение — вкладка «Поиск» (нужен шлюз в настройках). Фон и обложка — в «Настройки».
       </Text>
@@ -104,10 +105,9 @@ const styles = StyleSheet.create({
   kickerSub: { fontSize: 13, color: '#a1a1b0', marginTop: 2 },
   card: {
     borderRadius: 20,
+  },
+  cardContent: {
     padding: 22,
-    backgroundColor: 'rgba(30,27,45,0.95)',
-    borderWidth: 1,
-    borderColor: 'rgba(168,85,247,0.35)',
   },
   cardTitle: {
     fontSize: 26,
