@@ -14,9 +14,11 @@ import {
 import { launchImageLibrary } from 'react-native-image-picker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
+  gatewayCheck,
   gatewayValidateVk,
   gatewayValidateYandex,
 } from '../api/flowGateway';
+import { LiquidGlassPanel } from '../components/LiquidGlassPanel';
 import { FONT_CHOICES, fontFamilyForId } from '../constants/fontChoices';
 import { useFlowSettings } from '../context/FlowSettingsContext';
 
@@ -88,6 +90,8 @@ export function SettingsScreen() {
   const [validateMsg, setValidateMsg] = useState<string | null>(null);
   const [valYandexMsg, setValYandexMsg] = useState<string | null>(null);
   const [valVkMsg, setValVkMsg] = useState<string | null>(null);
+  const [gatewayMsg, setGatewayMsg] = useState<string | null>(null);
+  const [busyGateway, setBusyGateway] = useState(false);
   const [busyY, setBusyY] = useState(false);
   const [busyV, setBusyV] = useState(false);
 
@@ -137,6 +141,19 @@ export function SettingsScreen() {
       setValidating(false);
     }
   }, [localBase, localToken, setApiBase, setApiToken]);
+
+  const onCheckGateway = useCallback(async () => {
+    setGatewayMsg(null);
+    setBusyGateway(true);
+    try {
+      const r = await gatewayCheck(gatewayBase, gatewaySecret);
+      setGatewayMsg(r.message);
+    } catch (e: unknown) {
+      setGatewayMsg(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusyGateway(false);
+    }
+  }, [gatewayBase, gatewaySecret]);
 
   const onValidateYandex = useCallback(async () => {
     setValYandexMsg(null);
@@ -224,35 +241,54 @@ export function SettingsScreen() {
           <Text style={styles.btnDangerText}>Сбросить оформление</Text>
         </Pressable>
 
-        <Text style={[styles.section, { marginTop: 26 }]}>Шлюз музыки (Node на VPS/ПК)</Text>
-        <Text style={styles.hint}>
-          Запуск: в папке flow_fixed —{' '}
-          <Text style={styles.mono}>
-            FLOW_MOBILE_GATEWAY_SECRET=... npm run mobile-gateway
+        <LiquidGlassPanel
+          style={styles.gatewayGlass}
+          contentStyle={styles.gatewayGlassContent}>
+          <Text style={styles.section}>Шлюз музыки (Node на VPS/ПК)</Text>
+          <Text style={styles.hint}>
+            Запуск: в папке flow_fixed —{' '}
+            <Text style={styles.mono}>
+              FLOW_MOBILE_GATEWAY_SECRET=... npm run mobile-gateway
+            </Text>
+            . URL и секрет уже вставлены по умолчанию, поменяй их под свой сервер.
           </Text>
-          . Порт по умолчанию 3950. Сюда — URL (http/https) и тот же секрет в Bearer.
-        </Text>
-        <Text style={styles.label}>URL шлюза</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="http://192.168.1.5:3950"
-          placeholderTextColor="#6b7280"
-          autoCapitalize="none"
-          autoCorrect={false}
-          keyboardAppearance="dark"
-          value={gatewayBase}
-          onChangeText={setGatewayBase}
-        />
-        <Text style={styles.label}>Секрет шлюза</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="FLOW_MOBILE_GATEWAY_SECRET"
-          placeholderTextColor="#6b7280"
-          autoCapitalize="none"
-          secureTextEntry
-          value={gatewaySecret}
-          onChangeText={setGatewaySecret}
-        />
+          <Text style={styles.label}>URL шлюза</Text>
+          <TextInput
+            style={styles.inputGlass}
+            placeholder="http://192.168.1.5:3950"
+            placeholderTextColor="rgba(255,255,255,0.38)"
+            autoCapitalize="none"
+            autoCorrect={false}
+            keyboardAppearance="dark"
+            value={gatewayBase}
+            onChangeText={setGatewayBase}
+          />
+          <Text style={styles.label}>Секрет шлюза</Text>
+          <TextInput
+            style={styles.inputGlass}
+            placeholder="FLOW_MOBILE_GATEWAY_SECRET"
+            placeholderTextColor="rgba(255,255,255,0.38)"
+            autoCapitalize="none"
+            secureTextEntry
+            keyboardAppearance="dark"
+            value={gatewaySecret}
+            onChangeText={setGatewaySecret}
+          />
+          <Pressable
+            style={[styles.btnPrimary, busyGateway && styles.btnDisabled]}
+            onPress={onCheckGateway}
+            disabled={busyGateway}>
+            {busyGateway ? (
+              <ActivityIndicator color="#0a0a12" />
+            ) : (
+              <Text style={styles.btnPrimaryText}>Проверить шлюз</Text>
+            )}
+          </Pressable>
+          {gatewayMsg ? <Text style={styles.smallMsg}>{gatewayMsg}</Text> : null}
+          {gatewayMsg === 'Шлюз доступен, секрет принят' ? (
+            <Text style={styles.okBadge}>Шлюз: подключен</Text>
+          ) : null}
+        </LiquidGlassPanel>
 
         <Text style={[styles.section, { marginTop: 22 }]}>Токены источников (как в десктопе)</Text>
         <Text style={styles.label}>Spotify access token</Text>
@@ -405,6 +441,13 @@ const styles = StyleSheet.create({
     color: '#9ca3af',
   },
   scroll: { flex: 1 },
+  gatewayGlass: {
+    marginTop: 26,
+    marginBottom: 2,
+  },
+  gatewayGlassContent: {
+    padding: 16,
+  },
   section: {
     fontSize: 13,
     fontWeight: '700',
@@ -457,6 +500,16 @@ const styles = StyleSheet.create({
     borderColor: '#2e2e42',
     paddingHorizontal: 14,
     paddingVertical: 12,
+    color: '#f9fafb',
+    fontSize: 15,
+  },
+  inputGlass: {
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderRadius: 14,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(255,255,255,0.22)',
+    paddingHorizontal: 14,
+    paddingVertical: Platform.OS === 'ios' ? 13 : 12,
     color: '#f9fafb',
     fontSize: 15,
   },

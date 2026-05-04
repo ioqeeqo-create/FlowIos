@@ -9,6 +9,9 @@ import React, {
 } from 'react';
 import type { SearchSource } from '../types/flowTrack';
 
+const DEFAULT_GATEWAY_BASE = 'http://192.168.1.5:3950';
+const DEFAULT_GATEWAY_SECRET = 'FLOW_MOBILE_GATEWAY_SECRET';
+
 const K = {
   backgroundUri: 'flow:appearance:bg',
   coverUri: 'flow:appearance:cover',
@@ -73,8 +76,8 @@ export function FlowSettingsProvider({ children }: { children: React.ReactNode }
   const [fontId, setFontIdState] = useState('system');
   const [apiBase, setApiBaseState] = useState('');
   const [apiToken, setApiTokenState] = useState('');
-  const [gatewayBase, setGatewayBaseState] = useState('');
-  const [gatewaySecret, setGatewaySecretState] = useState('');
+  const [gatewayBase, setGatewayBaseState] = useState(DEFAULT_GATEWAY_BASE);
+  const [gatewaySecret, setGatewaySecretState] = useState(DEFAULT_GATEWAY_SECRET);
   const [spotifyToken, setSpotifyTokenState] = useState('');
   const [yandexToken, setYandexTokenState] = useState('');
   const [vkToken, setVkTokenState] = useState('');

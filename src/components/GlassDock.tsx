@@ -1,7 +1,7 @@
 import React from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
-import { BlurView } from '@react-native-community/blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { LiquidGlassPanel } from './LiquidGlassPanel';
 
 const R = 26;
 
@@ -19,19 +19,9 @@ export function GlassDock({ children }: Props) {
   if (Platform.OS === 'ios') {
     return (
       <View style={[styles.iosWrap, { marginBottom: bottom - 2 }]}>
-        <View style={styles.iosShadow}>
-          <View style={styles.iosClip}>
-            <BlurView
-              style={StyleSheet.absoluteFill}
-              blurType="thinMaterialDark"
-              blurAmount={48}
-              reducedTransparencyFallbackColor="#14141f"
-            />
-            <View style={styles.tint} pointerEvents="none" />
-            <View style={styles.hairline} pointerEvents="none" />
-            <View style={styles.children}>{children}</View>
-          </View>
-        </View>
+        <LiquidGlassPanel borderRadius={R} contentStyle={styles.children}>
+          {children}
+        </LiquidGlassPanel>
       </View>
     );
   }
@@ -48,28 +38,6 @@ const styles = StyleSheet.create({
   iosWrap: {
     marginHorizontal: 11,
     backgroundColor: 'transparent',
-  },
-  iosShadow: {
-    borderRadius: R,
-    backgroundColor: 'rgba(10,10,18,0.35)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.45,
-    shadowRadius: 20,
-  },
-  iosClip: {
-    borderRadius: R,
-    overflow: 'hidden',
-  },
-  tint: {
-    ...StyleSheet.absoluteFill,
-    backgroundColor: 'rgba(8, 6, 18, 0.38)',
-  },
-  hairline: {
-    ...StyleSheet.absoluteFill,
-    borderRadius: R,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255,255,255,0.14)',
   },
   children: {
     borderRadius: R,

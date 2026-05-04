@@ -16,7 +16,17 @@ export type FlowGatewayClientConfig = {
 export type FlowGatewayClient = {
   normalizeGatewayBase: typeof normalizeGatewayBase;
   getBase(): string;
-  health(): Promise<{ ok: boolean; status?: number; body?: unknown; error?: string }>;
+  health(): Promise<{
+    ok: boolean;
+    status?: number;
+    body?: unknown;
+    error?: string;
+  }>;
+  checkSecret(): Promise<{
+    ok: boolean;
+    message: string;
+    health?: unknown;
+  }>;
   search(
     q: string,
     source: string,
