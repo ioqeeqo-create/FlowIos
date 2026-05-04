@@ -66,6 +66,9 @@ yarn-error.log
 # testing
 /coverage
 
+# CI-downloaded unsigned IPA (local only)
+/dist-ipa/
+
 # Yarn
 .yarn/*
 !.yarn/patches
