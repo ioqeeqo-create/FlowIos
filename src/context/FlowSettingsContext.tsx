@@ -18,6 +18,13 @@ export const DEFAULT_SOCIAL_SECRET = 'flowflow';
 
 const LEGACY_HOST = '85.239.34.229';
 
+function normalizeOAuthAccessToken(raw: string): string {
+  const s = String(raw || '').trim();
+  if (!s) return '';
+  const m = s.match(/access_token=([^&#]+)/i);
+  return m ? decodeURIComponent(m[1]) : s;
+}
+
 function migrateLegacyBase(raw: string, kind: 'gateway' | 'social') {
   const v = String(raw || '').trim().replace(/\/$/, '');
   if (!v) return '';
@@ -366,8 +373,9 @@ export function FlowSettingsProvider({ children }: { children: React.ReactNode }
 
   const setYandexToken = useCallback(
     (v: string) => {
-      setYandexTokenState(v);
-      void persist(K.yandexToken, v.trim() || null);
+      const normalized = normalizeOAuthAccessToken(v);
+      setYandexTokenState(normalized);
+      void persist(K.yandexToken, normalized || null);
       setYandexValidatedState(false);
       void persist(K.yandexValidated, null);
     },

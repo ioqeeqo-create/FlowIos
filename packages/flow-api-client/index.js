@@ -27,6 +27,12 @@ function mobileV1Path(baseNorm, relative) {
   return `/mobile/v1${relative}`
 }
 
+function mobileV1PathFallback(baseNorm, relative) {
+  const b = String(baseNorm || '').replace(/\/$/, '')
+  if (/\/mobile$/i.test(b)) return `/mobile/v1${relative}`
+  return `/v1${relative}`
+}
+
 function describeNetworkError(error, url, timeoutMs = DEFAULT_FETCH_TIMEOUT_MS) {
   const raw = error && error.message ? String(error.message) : String(error || '')
   if (/abort/i.test(raw)) {
@@ -64,22 +70,42 @@ function createFlowGatewayClient(cfg) {
   const uaHeaders = { 'User-Agent': 'FlowMobile/1.0 (Flow; gateway client)' }
 
   async function post(relativeV1, body) {
-    const path = mobileV1Path(base, relativeV1)
-    const url = `${base.replace(/\/$/, '')}${path}`
-    return fetchWithTimeout(
-      fetchImpl,
-      url,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${secret}`,
-          ...uaHeaders,
-        },
-        body: JSON.stringify(body ?? {}),
-      },
-      DEFAULT_FETCH_TIMEOUT_MS,
-    )
+    const primaryPath = mobileV1Path(base, relativeV1)
+    const fallbackPath = mobileV1PathFallback(base, relativeV1)
+    const paths = primaryPath === fallbackPath ? [primaryPath] : [primaryPath, fallbackPath]
+    let lastResponse = null
+    let lastError = null
+
+    for (const path of paths) {
+      const url = `${base.replace(/\/$/, '')}${path}`
+      try {
+        const rsp = await fetchWithTimeout(
+          fetchImpl,
+          url,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${secret}`,
+              ...uaHeaders,
+            },
+            body: JSON.stringify(body ?? {}),
+          },
+          DEFAULT_FETCH_TIMEOUT_MS,
+        )
+        lastResponse = rsp
+        // Если прокси дал 404 на одном варианте пути — пробуем альтернативный.
+        if (rsp.status === 404 && path !== paths[paths.length - 1]) continue
+        return rsp
+      } catch (e) {
+        lastError = e
+        if (path !== paths[paths.length - 1]) continue
+        throw e
+      }
+    }
+
+    if (lastResponse) return lastResponse
+    throw lastError
   }
 
   return {

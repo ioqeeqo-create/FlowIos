@@ -46,7 +46,6 @@ const SOURCES: { id: SearchSource; label: string }[] = [
   { id: 'soundcloud', label: 'SC' },
   { id: 'audius', label: 'Audius' },
   { id: 'yandex', label: 'Яндекс' },
-  { id: 'vk', label: 'VK' },
   { id: 'youtube', label: 'YT' },
 ];
 
@@ -108,9 +107,6 @@ export function SearchScreen() {
     }
     if (source === 'yandex') {
       if (!s.yandexToken.trim()) return 'Введи OAuth Яндекса в Настройках.';
-      if (!s.yandexValidated) {
-        return 'Сначала «Проверить Яндекс (через шлюз)» в Настройках.';
-      }
     }
     if (source === 'vk') {
       if (!s.vkToken.trim()) return 'Введи VK token в Настройках.';
@@ -125,7 +121,6 @@ export function SearchScreen() {
     s.vkToken,
     s.vkValidated,
     s.yandexToken,
-    s.yandexValidated,
     source,
   ]);
 
@@ -171,10 +166,6 @@ export function SearchScreen() {
         `${current.source}:${current.id}` === `${track.source}:${track.id}`;
       playOrToggleTrack(track);
       if (samePlaying) return;
-      if (src === 'yandex' && !s.yandexValidated) {
-        Alert.alert('', 'Нужен активный токен Яндекса.');
-        return;
-      }
       if (src === 'vk' && !s.vkValidated) {
         Alert.alert('', 'Нужен активный токен ВКонтакте.');
         return;
@@ -204,7 +195,6 @@ export function SearchScreen() {
       gwSecret,
       s.gatewayBase,
       s.vkValidated,
-      s.yandexValidated,
       tokens,
     ],
   );

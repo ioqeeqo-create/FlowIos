@@ -31,6 +31,13 @@ if (Platform.OS === 'ios') {
 /** Дефолтный Bearer для соц API и секрет музыкального шлюза на твоём VPS. */
 const DEFAULT_FLOW_SECRET = 'flowflow';
 
+function normalizeOAuthAccessToken(raw: string): string {
+  const s = String(raw || '').trim();
+  if (!s) return '';
+  const m = s.match(/access_token=([^&#]+)/i);
+  return m ? decodeURIComponent(m[1]) : s;
+}
+
 async function validateFlowSocialToken(
   base: string,
   token: string,
@@ -254,10 +261,17 @@ export function SettingsScreen() {
     setValYandexMsg(null);
     setBusyY(true);
     try {
+      const normalized = normalizeOAuthAccessToken(yandexToken);
+      if (!normalized) {
+        setValYandexMsg('Вставь OAuth token или полный URL с access_token=');
+        setYandexValidated(false);
+        return;
+      }
+      if (normalized !== yandexToken) setYandexToken(normalized);
       const r = await gatewayValidateYandex(
         gatewayBase,
         gatewaySecretEffective,
-        yandexToken,
+        normalized,
       );
       setValYandexMsg(r.message);
       setYandexValidated(r.ok);
@@ -267,7 +281,7 @@ export function SettingsScreen() {
     } finally {
       setBusyY(false);
     }
-  }, [gatewayBase, gatewaySecretEffective, setYandexValidated, yandexToken]);
+  }, [gatewayBase, gatewaySecretEffective, setYandexToken, setYandexValidated, yandexToken]);
 
   const onValidateVk = useCallback(async () => {
     setValVkMsg(null);
