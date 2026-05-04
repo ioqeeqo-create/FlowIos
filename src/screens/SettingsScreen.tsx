@@ -13,40 +13,14 @@ import {
 } from 'react-native';
 import { launchImageLibrary } from 'react-native-image-picker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Svg, { Defs, LinearGradient, Path, Stop } from 'react-native-svg';
 import {
   gatewayCheck,
   gatewayValidateVk,
   gatewayValidateYandex,
 } from '../api/flowGateway';
 import { LiquidGlassPanel } from '../components/LiquidGlassPanel';
-import { FONT_CHOICES, fontFamilyForId } from '../constants/fontChoices';
+import { fontFamilyForId } from '../constants/fontChoices';
 import { useFlowSettings } from '../context/FlowSettingsContext';
-
-function GlassWave() {
-  return (
-    <Svg
-      width="100%"
-      height={74}
-      viewBox="0 0 360 74"
-      preserveAspectRatio="none"
-      style={styles.glassWave}
-      pointerEvents="none">
-      <Defs>
-        <LinearGradient id="settingsGlassWave" x1="0" y1="0" x2="1" y2="0">
-          <Stop offset="0" stopColor="#ffffff" stopOpacity="0.38" />
-          <Stop offset="0.55" stopColor="#ffffff" stopOpacity="0.1" />
-          <Stop offset="1" stopColor="#ffffff" stopOpacity="0.28" />
-        </LinearGradient>
-      </Defs>
-      <Path
-        d="M0 0 H360 C338 43 292 54 222 44 C143 32 81 64 0 38 Z"
-        fill="url(#settingsGlassWave)"
-        opacity="0.62"
-      />
-    </Svg>
-  );
-}
 
 async function validateFlowSocialToken(
   base: string,
@@ -265,7 +239,7 @@ export function SettingsScreen() {
           intensity="chrome"
           style={styles.appearanceGlass}
           contentStyle={styles.appearanceContent}>
-          <GlassWave />
+          <View style={styles.glassHighlight} pointerEvents="none" />
           <Text style={styles.section}>Оформление</Text>
           <Text style={styles.hint}>
             Фото и GIF из галереи — фон и обложка в шапке «Моя волна».
@@ -290,7 +264,7 @@ export function SettingsScreen() {
           intensity="chrome"
           style={styles.gatewayGlass}
           contentStyle={styles.gatewayGlassContent}>
-          <GlassWave />
+          <View style={styles.glassHighlight} pointerEvents="none" />
           <Text style={styles.section}>Шлюз музыки (Node на VPS/ПК)</Text>
           <Text style={styles.hint}>
             Запуск: в папке flow_fixed —{' '}
@@ -448,28 +422,7 @@ export function SettingsScreen() {
         {validateMsg ? <Text style={styles.smallMsg}>{validateMsg}</Text> : null}
 
         <Text style={[styles.section, { marginTop: 26 }]}>Шрифт</Text>
-        <Text style={styles.hint}>Превью «Abc123» в квадрате.</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.fontRow}>
-          {FONT_CHOICES.map(choice => {
-            const active = choice.id === fontId;
-            const fam = choice.iosFontFamily;
-            return (
-              <Pressable
-                key={choice.id}
-                onPress={() => setFontId(choice.id)}
-                style={[styles.fontCard, active && styles.fontCardActive]}>
-                <View style={styles.fontPreviewBox}>
-                  <Text style={[styles.fontPreviewText, fam ? { fontFamily: fam } : null]}>
-                    Abc123
-                  </Text>
-                </View>
-                <Text style={styles.fontLabel} numberOfLines={2}>
-                  {choice.label}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </ScrollView>
+        <Text style={styles.hint}>Minecraftia включён как основной шрифт всего приложения.</Text>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -493,11 +446,16 @@ const styles = StyleSheet.create({
     color: '#9ca3af',
   },
   scroll: { flex: 1 },
-  glassWave: {
+  glassHighlight: {
     position: 'absolute',
-    top: 0,
+    top: -28,
     left: 0,
     right: 0,
+    height: 74,
+    borderBottomLeftRadius: 140,
+    borderBottomRightRadius: 42,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    opacity: 0.75,
   },
   appearanceGlass: {
     marginTop: 8,
