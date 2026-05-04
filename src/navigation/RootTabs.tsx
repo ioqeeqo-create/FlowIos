@@ -1,9 +1,8 @@
-import { createBottomTabNavigator, BottomTabBar } from '@react-navigation/bottom-tabs';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
-import React, { type ComponentProps } from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import React from 'react';
+import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { GlassDock } from '../components/GlassDock';
 import { MiniPlayer } from '../components/MiniPlayer';
 import {
@@ -20,9 +19,25 @@ import { SettingsScreen } from '../screens/SettingsScreen';
 
 const Tab = createBottomTabNavigator();
 
-type TabBarComponentProps = ComponentProps<typeof BottomTabBar>;
-
 const TAB_ORDER = ['Wave', 'Search', 'Library', 'Social', 'Settings'];
+const TAB_LABELS: Record<string, string> = {
+  Wave: 'Моя волна',
+  Search: 'Поиск',
+  Library: 'Библиотека',
+  Social: 'Соц.',
+  Settings: 'Настройки',
+};
+
+const TAB_ICONS: Record<
+  string,
+  (props: { color: string; focused: boolean; size?: number }) => React.ReactNode
+> = {
+  Wave: props => <TabIconHome {...props} />,
+  Search: props => <TabIconSearch {...props} />,
+  Library: props => <TabIconLibrary {...props} />,
+  Social: props => <TabIconSocial {...props} />,
+  Settings: props => <TabIconSettings {...props} />,
+};
 
 const NavTheme = {
   ...DefaultTheme,
@@ -43,32 +58,63 @@ function tabSlot(focused: boolean, node: React.ReactNode) {
 }
 
 export function RootTabs() {
-  const insets = useSafeAreaInsets();
-
   const renderTabBar = (props: BottomTabBarProps) => {
-    const barProps = {
-      ...props,
-      insets: { ...props.insets, bottom: 0 },
-      style: [
-        (props as TabBarComponentProps).style,
-        {
-          backgroundColor: 'transparent',
-          borderTopWidth: 0,
-          elevation: 0,
-          shadowOpacity: 0,
-          height: Platform.OS === 'ios' ? 52 : 56 + insets.bottom,
-          paddingBottom: Platform.OS === 'ios' ? 6 : Math.max(insets.bottom, 8),
-          paddingTop: 4,
-        },
-      ],
-    } satisfies TabBarComponentProps;
-
     const activeIndex = TAB_ORDER.indexOf(String(props.state.routes[props.state.index]?.name));
 
     return (
       <GlassDock activeIndex={activeIndex < 0 ? props.state.index : activeIndex}>
         <MiniPlayer />
-        <BottomTabBar {...barProps} />
+        <View style={styles.tabsRow}>
+          {props.state.routes.map((route, index) => {
+            const focused = props.state.index === index;
+            const color = focused ? '#ffffff' : 'rgba(214,205,230,0.58)';
+            const label = TAB_LABELS[route.name] || route.name;
+            const icon = TAB_ICONS[route.name]?.({
+              color,
+              focused,
+              size: focused ? 25 : 23,
+            });
+
+            const onPress = () => {
+              const event = props.navigation.emit({
+                type: 'tabPress',
+                target: route.key,
+                canPreventDefault: true,
+              });
+
+              if (!focused && !event.defaultPrevented) {
+                props.navigation.navigate(route.name, route.params);
+              }
+            };
+
+            const onLongPress = () => {
+              props.navigation.emit({
+                type: 'tabLongPress',
+                target: route.key,
+              });
+            };
+
+            return (
+              <Pressable
+                key={route.key}
+                accessibilityRole="button"
+                accessibilityState={focused ? { selected: true } : {}}
+                onPress={onPress}
+                onLongPress={onLongPress}
+                style={styles.tabButton}>
+                {tabSlot(focused, icon)}
+                <Text
+                  numberOfLines={1}
+                  style={[
+                    styles.tabLabel,
+                    focused ? styles.tabLabelActive : styles.tabLabelInactive,
+                  ]}>
+                  {label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
       </GlassDock>
     );
   };
@@ -84,9 +130,6 @@ export function RootTabs() {
             borderTopWidth: 0,
             elevation: 0,
           },
-          tabBarActiveTintColor: '#f6efff',
-          tabBarInactiveTintColor: 'rgba(214,205,230,0.54)',
-          tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
         }}>
         <Tab.Screen
           name="Wave"
@@ -141,12 +184,44 @@ export function RootTabs() {
 }
 
 const styles = StyleSheet.create({
+  tabsRow: {
+    height: Platform.OS === 'ios' ? 58 : 62,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 6,
+    paddingTop: 6,
+    paddingBottom: 5,
+  },
+  tabButton: {
+    flex: 1,
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 2,
+  },
   tabGlyphWrap: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
+    minWidth: 36,
+    minHeight: 28,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  tabGlyphWrapActive: {},
+  tabGlyphWrapActive: {
+    shadowColor: '#ffffff',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.45,
+    shadowRadius: 7,
+  },
+  tabLabel: {
+    maxWidth: 72,
+    fontSize: 10.5,
+    fontWeight: '700',
+    letterSpacing: -0.1,
+  },
+  tabLabelActive: {
+    color: '#ffffff',
+  },
+  tabLabelInactive: {
+    color: 'rgba(214,205,230,0.52)',
+  },
 });

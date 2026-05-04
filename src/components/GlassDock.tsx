@@ -1,5 +1,13 @@
 import React from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
+import Svg, {
+  Defs,
+  Ellipse,
+  LinearGradient,
+  Path,
+  Rect,
+  Stop,
+} from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LiquidGlassPanel } from './LiquidGlassPanel';
 
@@ -40,13 +48,75 @@ export function GlassDock({ children, activeIndex = 0 }: Props) {
             intensity="chrome"
             style={styles.activeLens}
             contentStyle={styles.activeLensContent}>
-            <View style={styles.lensMagnifier} />
-            <View style={styles.lensRainbowTop} />
-            <View style={styles.lensRainbowLeft} />
-            <View style={styles.lensRainbowRight} />
-            <View style={styles.lensShine} />
-            <View style={styles.lensHotspot} />
-            <View style={styles.lensInnerShadow} />
+            <Svg width="100%" height="100%" viewBox="0 0 112 78">
+              <Defs>
+                <LinearGradient id="glassFill" x1="8" y1="4" x2="104" y2="74">
+                  <Stop offset="0" stopColor="#ffffff" stopOpacity="0.46" />
+                  <Stop offset="0.42" stopColor="#ffffff" stopOpacity="0.08" />
+                  <Stop offset="1" stopColor="#000000" stopOpacity="0.28" />
+                </LinearGradient>
+                <LinearGradient id="rainbowTop" x1="12" y1="0" x2="100" y2="16">
+                  <Stop offset="0" stopColor="#7dd3fc" stopOpacity="0.64" />
+                  <Stop offset="0.5" stopColor="#ffffff" stopOpacity="0.72" />
+                  <Stop offset="1" stopColor="#facc15" stopOpacity="0.58" />
+                </LinearGradient>
+                <LinearGradient id="rainbowSide" x1="0" y1="8" x2="112" y2="70">
+                  <Stop offset="0" stopColor="#22d3ee" stopOpacity="0.62" />
+                  <Stop offset="0.5" stopColor="#ffffff" stopOpacity="0.08" />
+                  <Stop offset="1" stopColor="#fb7185" stopOpacity="0.58" />
+                </LinearGradient>
+              </Defs>
+              <Rect
+                x="4"
+                y="4"
+                width="104"
+                height="70"
+                rx="35"
+                fill="url(#glassFill)"
+                stroke="rgba(255,255,255,0.62)"
+                strokeWidth="1.4"
+              />
+              <Path
+                d="M18 16 C28 1, 78 1, 95 15"
+                stroke="url(#rainbowTop)"
+                strokeWidth="4.2"
+                strokeLinecap="round"
+                fill="none"
+              />
+              <Path
+                d="M12 24 C4 34, 5 48, 15 58"
+                stroke="url(#rainbowSide)"
+                strokeWidth="4.4"
+                strokeLinecap="round"
+                fill="none"
+              />
+              <Path
+                d="M100 23 C109 34, 108 49, 98 59"
+                stroke="url(#rainbowSide)"
+                strokeWidth="4.4"
+                strokeLinecap="round"
+                fill="none"
+              />
+              <Ellipse cx="56" cy="39" rx="42" ry="17" fill="#ffffff" opacity="0.11" />
+              <Ellipse
+                cx="42"
+                cy="22"
+                rx="24"
+                ry="7"
+                fill="#ffffff"
+                opacity="0.42"
+                transform="rotate(-11 42 22)"
+              />
+              <Ellipse
+                cx="75"
+                cy="58"
+                rx="16"
+                ry="5"
+                fill="#ffffff"
+                opacity="0.2"
+                transform="rotate(-8 75 58)"
+              />
+            </Svg>
           </LiquidGlassPanel>
         </View>
       </View>
@@ -80,9 +150,9 @@ const styles = StyleSheet.create({
     zIndex: 20,
   },
   activeLens: {
-    width: 104,
-    height: 74,
-    borderRadius: 38,
+    width: 112,
+    height: 78,
+    borderRadius: 39,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 16 },
     shadowOpacity: 0.5,
@@ -91,82 +161,6 @@ const styles = StyleSheet.create({
   activeLensContent: {
     flex: 1,
     overflow: 'hidden',
-  },
-  lensMagnifier: {
-    position: 'absolute',
-    left: 18,
-    right: 18,
-    top: 20,
-    bottom: 20,
-    borderRadius: 999,
-    backgroundColor: 'rgba(255,255,255,0.13)',
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255,255,255,0.42)',
-    transform: [{ scaleX: 1.65 }],
-  },
-  lensRainbowTop: {
-    position: 'absolute',
-    top: -10,
-    left: 14,
-    right: 14,
-    height: 30,
-    borderRadius: 999,
-    backgroundColor: 'rgba(255,255,255,0.4)',
-    borderTopWidth: 3,
-    borderLeftWidth: 1,
-    borderRightWidth: 1,
-    borderColor: 'rgba(163,230,53,0.62)',
-  },
-  lensRainbowLeft: {
-    position: 'absolute',
-    left: -2,
-    top: 16,
-    width: 24,
-    height: 40,
-    borderRadius: 18,
-    backgroundColor: 'rgba(96,165,250,0.2)',
-    borderRightWidth: 3,
-    borderRightColor: 'rgba(251,191,36,0.62)',
-  },
-  lensRainbowRight: {
-    position: 'absolute',
-    right: -2,
-    top: 17,
-    width: 24,
-    height: 40,
-    borderRadius: 18,
-    backgroundColor: 'rgba(236,72,153,0.18)',
-    borderLeftWidth: 3,
-    borderLeftColor: 'rgba(34,211,238,0.62)',
-  },
-  lensShine: {
-    position: 'absolute',
-    left: 16,
-    top: 12,
-    width: 48,
-    height: 15,
-    borderRadius: 999,
-    backgroundColor: 'rgba(255,255,255,0.5)',
-    transform: [{ rotate: '-12deg' }],
-  },
-  lensHotspot: {
-    position: 'absolute',
-    right: 17,
-    bottom: 13,
-    width: 24,
-    height: 9,
-    borderRadius: 999,
-    backgroundColor: 'rgba(255,255,255,0.25)',
-    transform: [{ rotate: '-9deg' }],
-  },
-  lensInnerShadow: {
-    ...StyleSheet.absoluteFillObject,
-    borderRadius: 38,
-    borderWidth: 1.5,
-    borderTopColor: 'rgba(255,255,255,0.72)',
-    borderBottomColor: 'rgba(0,0,0,0.32)',
-    borderLeftColor: 'rgba(255,255,255,0.34)',
-    borderRightColor: 'rgba(255,255,255,0.34)',
   },
   androidRoot: {
     backgroundColor: '#0c0c14',
