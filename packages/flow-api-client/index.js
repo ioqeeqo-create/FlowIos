@@ -20,6 +20,13 @@ function normalizeGatewayBase(raw) {
   return s.replace(/\/$/, '')
 }
 
+/** Публичный base …/mobile → API на …/mobile/v1/…; прямой base :3950 → …/mobile/v1/… (без дубля /mobile). */
+function mobileV1Path(baseNorm, relative) {
+  const b = String(baseNorm || '').replace(/\/$/, '')
+  if (/\/mobile$/i.test(b)) return `/v1${relative}`
+  return `/mobile/v1${relative}`
+}
+
 function describeNetworkError(error, url, timeoutMs = DEFAULT_FETCH_TIMEOUT_MS) {
   const raw = error && error.message ? String(error.message) : String(error || '')
   if (/abort/i.test(raw)) {
@@ -54,8 +61,10 @@ function createFlowGatewayClient(cfg) {
   }
   const base = normalizeGatewayBase(cfg.baseUrl)
   const secret = String(cfg.secret || '').trim()
+  const uaHeaders = { 'User-Agent': 'FlowMobile/1.0 (Flow; gateway client)' }
 
-  async function post(path, body) {
+  async function post(relativeV1, body) {
+    const path = mobileV1Path(base, relativeV1)
     const url = `${base.replace(/\/$/, '')}${path}`
     return fetchWithTimeout(
       fetchImpl,
@@ -65,6 +74,7 @@ function createFlowGatewayClient(cfg) {
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${secret}`,
+          ...uaHeaders,
         },
         body: JSON.stringify(body ?? {}),
       },
@@ -83,7 +93,12 @@ function createFlowGatewayClient(cfg) {
       if (!base) return { ok: false, error: 'Пустой baseUrl' }
       const url = `${base}/health`
       try {
-        const r = await fetchWithTimeout(fetchImpl, url, { method: 'GET' }, HEALTH_FETCH_TIMEOUT_MS)
+        const r = await fetchWithTimeout(
+          fetchImpl,
+          url,
+          { method: 'GET', headers: { ...uaHeaders } },
+          HEALTH_FETCH_TIMEOUT_MS,
+        )
         const j = await r.json().catch(() => ({}))
         return { ok: r.ok && j.ok === true, status: r.status, body: j }
       } catch (e) {
@@ -103,7 +118,9 @@ function createFlowGatewayClient(cfg) {
         }
       }
 
-      const r = await post('/mobile/v1/search', {
+      const probePath = mobileV1Path(base, '/search')
+      const probeUrl = `${base.replace(/\/$/, '')}${probePath}`
+      const r = await post('/search', {
         q: '__flow_gateway_check__',
         source: 'audius',
         tokens: {},
@@ -111,7 +128,7 @@ function createFlowGatewayClient(cfg) {
       if (r.networkError) {
         return {
           ok: false,
-          message: describeNetworkError(r.networkError, `${base}/mobile/v1/search`, DEFAULT_FETCH_TIMEOUT_MS),
+          message: describeNetworkError(r.networkError, probeUrl, DEFAULT_FETCH_TIMEOUT_MS),
           health,
         }
       }
@@ -134,7 +151,7 @@ function createFlowGatewayClient(cfg) {
       if (!base || !secret) {
         return { ok: false, tracks: [], error: 'Нет baseUrl или secret' }
       }
-      const r = await post('/mobile/v1/search', {
+      const r = await post('/search', {
         q,
         source,
         tokens: {
@@ -158,7 +175,7 @@ function createFlowGatewayClient(cfg) {
 
     async resolve(track, tokens = {}) {
       if (!base || !secret) return { ok: false, error: 'Нет шлюза' }
-      const r = await post('/mobile/v1/resolve', {
+      const r = await post('/resolve', {
         track,
         tokens: {
           yandexToken: tokens.yandexToken || '',
@@ -174,7 +191,7 @@ function createFlowGatewayClient(cfg) {
 
     async validateYandex(yandexToken) {
       if (!base) return { ok: false, message: 'Нет URL шлюза' }
-      const r = await post('/mobile/v1/validate/yandex', { token: yandexToken })
+      const r = await post('/validate/yandex', { token: yandexToken })
       const j = await r.json().catch(() => ({}))
       if (j.ok) return { ok: true, message: `Яндекс OK: ${j.login || 'ok'}` }
       return { ok: false, message: j.error || `HTTP ${r.status}` }
@@ -182,7 +199,7 @@ function createFlowGatewayClient(cfg) {
 
     async validateVk(vkToken) {
       if (!base) return { ok: false, message: 'Нет URL шлюза' }
-      const r = await post('/mobile/v1/validate/vk', { token: vkToken })
+      const r = await post('/validate/vk', { token: vkToken })
       const j = await r.json().catch(() => ({}))
       if (j.ok) return { ok: true, message: `VK OK: ${j.name || ''}` }
       return { ok: false, message: j.error || `HTTP ${r.status}` }

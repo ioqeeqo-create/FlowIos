@@ -40,9 +40,21 @@ async function validateFlowSocialToken(
   const bearer = token.trim() || DEFAULT_FLOW_SECRET;
 
   const url = `${b}/flow-api/v1/profile-public/flow`;
-  const res = await fetch(url, {
-    headers: { Authorization: `Bearer ${bearer}` },
-  });
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${bearer}`,
+        'User-Agent': 'FlowMobile/1.0 (Flow; settings)',
+      },
+    });
+  } catch (e) {
+    const m = e instanceof Error ? e.message : String(e);
+    return {
+      ok: false,
+      message: `Сеть: ${m}. Проверь URL в Safari, другую сеть (LTE/Wi‑Fi), VPN/Private Relay.`,
+    };
+  }
 
   if (res.status === 401) {
     return { ok: false, message: '401: токен не принят сервером' };

@@ -41,6 +41,21 @@ function hashPassword(password: string, salt: string) {
   return sha256(`${String(password || '')}::${String(salt || '')}`);
 }
 
+const SOCIAL_UA = { 'User-Agent': 'FlowMobile/1.0 (Flow; social)' } as const;
+
+function explainSocialNetworkError(apiRoot: string, err: unknown): string {
+  const m = err instanceof Error ? err.message : String(err);
+  if (/Network request failed|Failed to fetch|load failed|Aborted|aborted/i.test(m)) {
+    return [
+      'Сеть: запрос до Flow Social не дошёл.',
+      `Проверь в Safari: ${apiRoot}/flow-api/v1/profile-public/flow`,
+      'Попробуй другую сеть (LTE ↔ Wi‑Fi), отключи VPN / iCloud Private Relay.',
+      `Технически: ${m}`,
+    ].join(' ');
+  }
+  return `Сеть: ${m}`;
+}
+
 export function SocialAuthProvider({ children }: { children: React.ReactNode }) {
   const {
     apiBase,
@@ -75,9 +90,14 @@ export function SocialAuthProvider({ children }: { children: React.ReactNode }) 
   const syncProfileMedia = useCallback(
     async (u: string) => {
       if (!base || !bearer) return;
-      const res = await fetch(`${base}/flow-api/v1/profile-public/${encodeURIComponent(u)}`, {
-        headers: { Authorization: `Bearer ${bearer}` },
-      });
+      let res: Response;
+      try {
+        res = await fetch(`${base}/flow-api/v1/profile-public/${encodeURIComponent(u)}`, {
+          headers: { Authorization: `Bearer ${bearer}`, ...SOCIAL_UA },
+        });
+      } catch {
+        return;
+      }
       if (!res.ok) return;
       const p = (await res.json()) as {
         avatar_data?: string | null;
@@ -98,9 +118,14 @@ export function SocialAuthProvider({ children }: { children: React.ReactNode }) 
       if (!base || !bearer) return { ok: false, error: 'Social API не настроен' };
       if (!u) return { ok: false, error: 'Введите username' };
       if (!password) return { ok: false, error: 'Введите пароль' };
-      const r = await fetch(`${base}/flow-api/v1/profile-auth/${encodeURIComponent(u)}`, {
-        headers: { Authorization: `Bearer ${bearer}` },
-      });
+      let r: Response;
+      try {
+        r = await fetch(`${base}/flow-api/v1/profile-auth/${encodeURIComponent(u)}`, {
+          headers: { Authorization: `Bearer ${bearer}`, ...SOCIAL_UA },
+        });
+      } catch (e) {
+        return { ok: false, error: explainSocialNetworkError(base, e) };
+      }
       if (r.status === 404) return { ok: false, error: 'Профиль не найден, зарегистрируйся' };
       if (!r.ok) return { ok: false, error: `Ошибка входа: ${r.status}` };
       const data = (await r.json()) as { password_hash?: string; password_salt?: string };
@@ -124,26 +149,37 @@ export function SocialAuthProvider({ children }: { children: React.ReactNode }) 
       if (!base || !bearer) return { ok: false, error: 'Social API не настроен' };
       if (!u || u.length < 3) return { ok: false, error: 'Username: минимум 3 символа' };
       if (String(password || '').length < 4) return { ok: false, error: 'Пароль: минимум 4 символа' };
-      const check = await fetch(`${base}/flow-api/v1/profile-auth/${encodeURIComponent(u)}`, {
-        headers: { Authorization: `Bearer ${bearer}` },
-      });
+      let check: Response;
+      try {
+        check = await fetch(`${base}/flow-api/v1/profile-auth/${encodeURIComponent(u)}`, {
+          headers: { Authorization: `Bearer ${bearer}`, ...SOCIAL_UA },
+        });
+      } catch (e) {
+        return { ok: false, error: explainSocialNetworkError(base, e) };
+      }
       if (check.ok) return { ok: false, error: 'Username уже занят' };
       const salt = randomSalt(24);
       const password_hash = hashPassword(password, salt);
-      const up = await fetch(`${base}/flow-api/v1/profile`, {
-        method: 'PUT',
-        headers: {
-          Authorization: `Bearer ${bearer}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          username: u,
-          password_hash,
-          password_salt: salt,
-          online: true,
-          last_seen: new Date().toISOString(),
-        }),
-      });
+      let up: Response;
+      try {
+        up = await fetch(`${base}/flow-api/v1/profile`, {
+          method: 'PUT',
+          headers: {
+            Authorization: `Bearer ${bearer}`,
+            'Content-Type': 'application/json',
+            ...SOCIAL_UA,
+          },
+          body: JSON.stringify({
+            username: u,
+            password_hash,
+            password_salt: salt,
+            online: true,
+            last_seen: new Date().toISOString(),
+          }),
+        });
+      } catch (e) {
+        return { ok: false, error: explainSocialNetworkError(base, e) };
+      }
       if (!up.ok) return { ok: false, error: `Ошибка регистрации: ${up.status}` };
       await AsyncStorage.setItem(K.username, u);
       setSocialUsername(u);
