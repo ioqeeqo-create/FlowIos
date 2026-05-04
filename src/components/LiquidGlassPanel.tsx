@@ -7,6 +7,7 @@ import {
   ViewStyle,
 } from 'react-native';
 import { BlurView } from '@react-native-community/blur';
+import { GLASS_BORDER } from '../constants/theme';
 
 type Props = {
   children: React.ReactNode;
@@ -32,7 +33,7 @@ export function LiquidGlassPanel({
           <BlurView
             style={StyleSheet.absoluteFill}
             blurType="thinMaterialDark"
-            blurAmount={intensity === 'chrome' ? 72 : 54}
+            blurAmount={intensity === 'chrome' ? 32 : 25}
             reducedTransparencyFallbackColor="#151521"
           />
         ) : (
@@ -100,7 +101,7 @@ const styles = StyleSheet.create({
   },
   border: {
     ...StyleSheet.absoluteFillObject,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255,255,255,0.28)',
+    borderWidth: 0.5,
+    borderColor: GLASS_BORDER,
   },
 });

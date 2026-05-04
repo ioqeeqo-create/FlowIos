@@ -4,6 +4,7 @@ import {
   Alert,
   FlatList,
   Image,
+  Animated,
   Platform,
   Pressable,
   ScrollView,
@@ -18,6 +19,7 @@ import {
   gatewaySearch,
   type MusicTokens,
 } from '../api/flowGateway';
+import { LiquidGlassPanel } from '../components/LiquidGlassPanel';
 import { fontFamilyForId } from '../constants/fontChoices';
 import { useFlowSettings } from '../context/FlowSettingsContext';
 import { usePlayback } from '../context/PlaybackContext';
@@ -52,6 +54,15 @@ export function SearchScreen() {
   const s = useFlowSettings();
   const { playTrack } = usePlayback();
   const titleFont = fontFamilyForId(s.fontId);
+  const [fade] = useState(() => new Animated.Value(0));
+
+  useEffect(() => {
+    Animated.timing(fade, {
+      toValue: 1,
+      duration: 220,
+      useNativeDriver: true,
+    }).start();
+  }, [fade]);
 
   const [q, setQ] = useState('');
   const [source, setSource] = useState<SearchSource>('hybrid');
@@ -185,7 +196,19 @@ export function SearchScreen() {
   );
 
   const listHeader = (
-    <View style={{ paddingTop: insets.top + 10 }}>
+    <Animated.View
+      style={{
+        paddingTop: insets.top + 10,
+        opacity: fade,
+        transform: [
+          {
+            scale: fade.interpolate({
+              inputRange: [0, 1],
+              outputRange: [0.97, 1],
+            }),
+          },
+        ],
+      }}>
       <Text style={[styles.h1, titleFont ? { fontFamily: titleFont } : null]}>
         Поиск
       </Text>
@@ -244,7 +267,7 @@ export function SearchScreen() {
       </ScrollView>
 
       {msg ? <Text style={styles.msg}>{msg}</Text> : null}
-    </View>
+    </Animated.View>
   );
 
   return (
@@ -261,8 +284,13 @@ export function SearchScreen() {
           const key = `${item.source}:${item.id}`;
           const busy = resolvingId === key;
           return (
+            <LiquidGlassPanel
+              borderRadius={18}
+              style={styles.trackGlass}
+              contentStyle={styles.trackRow}
+            >
             <Pressable
-              style={styles.trackRow}
+              style={styles.trackPress}
               onPress={() => onPlay(item)}
               disabled={Boolean(busy)}>
               {item.cover ? (
@@ -283,6 +311,7 @@ export function SearchScreen() {
               </View>
               {busy ? <ActivityIndicator color="#c084fc" /> : null}
             </Pressable>
+            </LiquidGlassPanel>
           );
         }}
       />
@@ -291,7 +320,7 @@ export function SearchScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#07070d' },
+  root: { flex: 1, backgroundColor: 'transparent' },
   h1: {
     fontSize: 34,
     fontWeight: '700',
@@ -380,13 +409,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   trackRow: {
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+  },
+  trackPress: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: 'rgba(255,255,255,0.08)',
+  },
+  trackGlass: {
+    marginHorizontal: 14,
+    marginVertical: 5,
   },
   cover: {
     width: 52,

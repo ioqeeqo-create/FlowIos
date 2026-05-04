@@ -2,7 +2,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import React from 'react';
-import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Animated, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { GlassDock } from '../components/GlassDock';
 import { MiniPlayer } from '../components/MiniPlayer';
 import {
@@ -57,6 +57,81 @@ function tabSlot(focused: boolean, node: React.ReactNode) {
   );
 }
 
+function GlassTabButton({
+  color,
+  focused,
+  icon,
+  label,
+  onLongPress,
+  onPress,
+}: {
+  color: string;
+  focused: boolean;
+  icon: React.ReactNode;
+  label: string;
+  onLongPress: () => void;
+  onPress: () => void;
+}) {
+  const progress = React.useRef(new Animated.Value(focused ? 1 : 0)).current;
+
+  React.useEffect(() => {
+    Animated.parallel([
+      Animated.timing(progress, {
+        toValue: focused ? 1 : 0,
+        duration: 180,
+        useNativeDriver: true,
+      }),
+      Animated.spring(progress, {
+        toValue: focused ? 1 : 0,
+        damping: 16,
+        stiffness: 180,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [focused, progress]);
+
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityState={focused ? { selected: true } : {}}
+      onPress={onPress}
+      onLongPress={onLongPress}
+      style={styles.tabButton}>
+      <Animated.View
+        style={{
+          opacity: progress.interpolate({
+            inputRange: [0, 1],
+            outputRange: [0.72, 1],
+          }),
+          transform: [
+            {
+              scale: progress.interpolate({
+                inputRange: [0, 1],
+                outputRange: [0.92, 1.08],
+              }),
+            },
+          ],
+        }}>
+        {tabSlot(focused, icon)}
+      </Animated.View>
+      <Animated.Text
+        numberOfLines={1}
+        style={[
+          styles.tabLabel,
+          focused ? styles.tabLabelActive : styles.tabLabelInactive,
+          {
+            opacity: progress.interpolate({
+              inputRange: [0, 1],
+              outputRange: [0.62, 1],
+            }),
+          },
+        ]}>
+        {label}
+      </Animated.Text>
+    </Pressable>
+  );
+}
+
 export function RootTabs() {
   const renderTabBar = (props: BottomTabBarProps) => {
     const activeIndex = TAB_ORDER.indexOf(String(props.state.routes[props.state.index]?.name));
@@ -95,23 +170,15 @@ export function RootTabs() {
             };
 
             return (
-              <Pressable
+              <GlassTabButton
                 key={route.key}
-                accessibilityRole="button"
-                accessibilityState={focused ? { selected: true } : {}}
-                onPress={onPress}
+                color={color}
+                focused={focused}
+                icon={icon}
+                label={label}
                 onLongPress={onLongPress}
-                style={styles.tabButton}>
-                {tabSlot(focused, icon)}
-                <Text
-                  numberOfLines={1}
-                  style={[
-                    styles.tabLabel,
-                    focused ? styles.tabLabelActive : styles.tabLabelInactive,
-                  ]}>
-                  {label}
-                </Text>
-              </Pressable>
+                onPress={onPress}
+              />
             );
           })}
         </View>
