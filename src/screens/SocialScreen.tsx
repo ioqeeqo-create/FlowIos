@@ -11,8 +11,10 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LiquidGlassPanel } from '../components/LiquidGlassPanel';
-import { useFlowSettings } from '../context/FlowSettingsContext';
+import { DEFAULT_SOCIAL_SECRET, useFlowSettings } from '../context/FlowSettingsContext';
 import { useSocialAuth } from '../context/SocialAuthContext';
+
+const SOCIAL_UA = { 'User-Agent': 'FlowMobile/1.0 (Flow; social screen)' } as const;
 
 type PublicProfile = {
   username: string;
@@ -22,10 +24,6 @@ type PublicProfile = {
   bio?: string | null;
   total_tracks?: number;
 };
-
-function authHeaders(token: string) {
-  return { Authorization: `Bearer ${token}` };
-}
 
 export function SocialScreen() {
   const insets = useSafeAreaInsets();
@@ -38,22 +36,26 @@ export function SocialScreen() {
   const [message, setMessage] = useState<string | null>(null);
   const [selectedProfile, setSelectedProfile] = useState<PublicProfile | null>(null);
   const normalizedBase = useMemo(() => String(apiBase || '').trim().replace(/\/$/, ''), [apiBase]);
+  const bearerEffective = useMemo(
+    () => String(apiToken || '').trim() || DEFAULT_SOCIAL_SECRET,
+    [apiToken],
+  );
 
   const fetchProfile = useCallback(
     async (username: string) => {
       const res = await fetch(
         `${normalizedBase}/flow-api/v1/profile-public/${encodeURIComponent(username)}`,
-        { headers: authHeaders(apiToken) },
+        { headers: { Authorization: `Bearer ${bearerEffective}`, ...SOCIAL_UA } },
       );
       if (!res.ok) return null;
       return (await res.json()) as PublicProfile;
     },
-    [apiToken, normalizedBase],
+    [bearerEffective, normalizedBase],
   );
 
   const reload = useCallback(async () => {
-    if (!normalizedBase || !apiToken.trim()) {
-      setMessage('Укажи Flow Social URL и Bearer токен в настройках.');
+    if (!normalizedBase) {
+      setMessage('Укажи URL Flow Social в настройках.');
       return;
     }
     setLoading(true);
@@ -63,7 +65,7 @@ export function SocialScreen() {
       setSelfProfile(me);
       const fr = await fetch(
         `${normalizedBase}/flow-api/v1/friends/${encodeURIComponent(socialUsername)}`,
-        { headers: authHeaders(apiToken) },
+        { headers: { Authorization: `Bearer ${bearerEffective}`, ...SOCIAL_UA } },
       );
       const raw = fr.ok ? ((await fr.json()) as Array<{ friend_username?: string }>) : [];
       const names = raw
@@ -77,7 +79,7 @@ export function SocialScreen() {
     } finally {
       setLoading(false);
     }
-  }, [apiToken, fetchProfile, normalizedBase, socialUsername]);
+  }, [bearerEffective, fetchProfile, normalizedBase, socialUsername]);
 
   useEffect(() => {
     void reload();
@@ -110,7 +112,7 @@ export function SocialScreen() {
       <View style={styles.headRow}>
         <View>
           <Text style={styles.title}>Соц</Text>
-          <Text style={styles.subtitle}>Профили и друзья из Flow Social — стеклянные карточки и неоновый онлайн</Text>
+          <Text style={styles.subtitle}>Профили и друзья Flow Social</Text>
         </View>
         <Pressable style={styles.meBtn} onPress={() => selfProfile && setSelectedProfile(selfProfile)}>
           <Text style={styles.meBtnText}>Мой профиль</Text>
@@ -161,17 +163,17 @@ const styles = StyleSheet.create({
   title: { color: '#faf5ff', fontSize: 34, fontWeight: '800' },
   subtitle: { color: '#b9b2c8', fontSize: 12, marginTop: 2 },
   meBtn: {
-    borderRadius: 14,
+    borderRadius: 12,
     backgroundColor: 'rgba(255,255,255,0.08)',
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255,255,255,0.26)',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    borderColor: 'rgba(255,255,255,0.22)',
+    paddingHorizontal: 10,
+    paddingVertical: 8,
   },
   meBtnText: { color: '#f3e8ff', fontSize: 12, fontWeight: '700' },
   refresh: { marginTop: 10, marginBottom: 8 },
   refreshText: { color: '#c4b5fd', fontSize: 13, fontWeight: '700' },
-  msg: { color: '#fca5a5', marginBottom: 8, fontSize: 12 },
+  msg: { color: 'rgba(245,208,254,0.92)', marginBottom: 8, fontSize: 12, lineHeight: 17 },
   friendsTitle: { color: '#ddd6fe', fontSize: 13, marginTop: 12, marginBottom: 6, fontWeight: '700' },
   profileCard: { marginBottom: 10 },
   profileCardContent: { padding: 0, overflow: 'hidden' },

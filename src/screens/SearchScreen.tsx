@@ -21,6 +21,7 @@ import {
 } from '../api/flowGateway';
 import { LiquidGlassPanel } from '../components/LiquidGlassPanel';
 import { fontFamilyForId } from '../constants/fontChoices';
+import { FLOW_TEXT_WARN } from '../constants/theme';
 import { DEFAULT_GATEWAY_SECRET, useFlowSettings } from '../context/FlowSettingsContext';
 import { usePlayback } from '../context/PlaybackContext';
 import type { FlowTrack, SearchSource } from '../types/flowTrack';
@@ -399,9 +400,10 @@ const styles = StyleSheet.create({
   gate: {
     marginTop: 10,
     fontSize: 13,
-    color: '#fcd34d',
+    color: FLOW_TEXT_WARN,
     lineHeight: 18,
     paddingHorizontal: 16,
+    opacity: 0.95,
   },
   srcLabel: {
     marginTop: 14,

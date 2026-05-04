@@ -114,6 +114,11 @@ export function SettingsScreen() {
     resetAppearance,
   } = s;
 
+  const gatewaySecretEffective = useMemo(
+    () => String(gatewaySecret || '').trim() || DEFAULT_FLOW_SECRET,
+    [gatewaySecret],
+  );
+
   const [localBase, setLocalBase] = useState(apiBase);
   const [localToken, setLocalToken] = useState(apiToken);
   const [validating, setValidating] = useState(false);
@@ -223,13 +228,35 @@ export function SettingsScreen() {
     );
   }, []);
 
+  const onGatewayInfo = useCallback(() => {
+    Alert.alert(
+      'Музыкальный шлюз',
+      [
+        'Публичный URL заканчивается на …/mobile (Nginx :80).',
+        'Секрет в .env: FLOW_MOBILE_GATEWAY_SECRET=flowflow.',
+        'Не путай с Flow Social (/social) — это другой сервис.',
+      ].join('\n'),
+    );
+  }, []);
+
+  const onSocialInfo = useCallback(() => {
+    Alert.alert(
+      'Flow Social',
+      [
+        'База: http://<IP>/social через Nginx.',
+        'С телефона порт :3847 часто закрыт — используй /social на :80.',
+        'Пустое поле токена: в запросы подставляется flowflow (как на VPS).',
+      ].join('\n'),
+    );
+  }, []);
+
   const onValidateYandex = useCallback(async () => {
     setValYandexMsg(null);
     setBusyY(true);
     try {
       const r = await gatewayValidateYandex(
         gatewayBase,
-        gatewaySecret,
+        gatewaySecretEffective,
         yandexToken,
       );
       setValYandexMsg(r.message);
@@ -240,13 +267,13 @@ export function SettingsScreen() {
     } finally {
       setBusyY(false);
     }
-  }, [gatewayBase, gatewaySecret, setYandexValidated, yandexToken]);
+  }, [gatewayBase, gatewaySecretEffective, setYandexValidated, yandexToken]);
 
   const onValidateVk = useCallback(async () => {
     setValVkMsg(null);
     setBusyV(true);
     try {
-      const r = await gatewayValidateVk(gatewayBase, gatewaySecret, vkToken);
+      const r = await gatewayValidateVk(gatewayBase, gatewaySecretEffective, vkToken);
       setValVkMsg(r.message);
       setVkValidated(r.ok);
     } catch (e: unknown) {
@@ -255,12 +282,12 @@ export function SettingsScreen() {
     } finally {
       setBusyV(false);
     }
-  }, [gatewayBase, gatewaySecret, setVkValidated, vkToken]);
+  }, [gatewayBase, gatewaySecretEffective, setVkValidated, vkToken]);
 
   const onResetLook = useCallback(() => {
     Alert.alert(
       'Сброс оформления',
-      'Убрать фон, обложку и вернуть системный шрифт?',
+      'Убрать фон, обложку и сбросить оформление?',
       [
         { text: 'Отмена', style: 'cancel' },
         {
@@ -421,10 +448,12 @@ export function SettingsScreen() {
           <SectionHeader id="gateway" title="Gateway" />
           {openSections.gateway ? (
             <>
-          <Text style={styles.hint}>
-            Запуск: <Text style={styles.mono}>FLOW_MOBILE_GATEWAY_SECRET=flowflow</Text>. Это{' '}
-            <Text style={styles.mono}>/mobile</Text> (музыка), не путай с <Text style={styles.mono}>/social</Text>.
-          </Text>
+          <View style={styles.hintRow}>
+            <Text style={styles.hintShort}>Шлюз: …/mobile · секрет как на VPS</Text>
+            <Pressable onPress={onGatewayInfo} hitSlop={10} style={styles.infoHit}>
+              <Text style={styles.infoMark}>ⓘ</Text>
+            </Pressable>
+          </View>
           <Text style={styles.label}>URL шлюза</Text>
           <TextInput
             style={styles.inputGlass}
@@ -457,7 +486,7 @@ export function SettingsScreen() {
               <Text style={styles.btnPrimaryText}>Проверить шлюз</Text>
             )}
           </Pressable>
-          {gatewayMsg ? <Text style={styles.smallMsg}>{gatewayMsg}</Text> : null}
+          {gatewayMsg ? <Text style={styles.flowHint}>{gatewayMsg}</Text> : null}
           {gatewayMsg && gatewayMsg !== 'Шлюз доступен, секрет принят' ? (
             <Pressable style={styles.helpBtn} onPress={onShowGatewayHelp}>
               <Text style={styles.helpBtnText}>Что сделать на VPS?</Text>
@@ -506,7 +535,7 @@ export function SettingsScreen() {
             <Text style={styles.btnPrimaryText}>Проверить Яндекс (через шлюз)</Text>
           )}
         </Pressable>
-        {valYandexMsg ? <Text style={styles.smallMsg}>{valYandexMsg}</Text> : null}
+        {valYandexMsg ? <Text style={styles.flowHint}>{valYandexMsg}</Text> : null}
         {yandexValidated ? (
           <Text style={styles.okBadge}>Яндекс: проверен — поиск по Яндексу разрешён</Text>
         ) : null}
@@ -531,7 +560,7 @@ export function SettingsScreen() {
             <Text style={styles.btnPrimaryText}>Проверить VK (через шлюз)</Text>
           )}
         </Pressable>
-        {valVkMsg ? <Text style={styles.smallMsg}>{valVkMsg}</Text> : null}
+        {valVkMsg ? <Text style={styles.flowHint}>{valVkMsg}</Text> : null}
         {vkValidated ? (
           <Text style={styles.okBadge}>VK: проверен — поиск по VK разрешён</Text>
         ) : null}
@@ -556,11 +585,12 @@ export function SettingsScreen() {
           <SectionHeader id="social" title="Social" />
           {openSections.social ? (
             <>
-        <Text style={styles.hint}>
-          База: лучше <Text style={styles.mono}>http://IP/social</Text> через Nginx:80 — с телефона порт{' '}
-          <Text style={styles.mono}>:3847</Text> часто закрыт снаружи. Токен пустой = подставится{' '}
-          <Text style={styles.mono}>flowflow</Text>.
-        </Text>
+        <View style={styles.hintRow}>
+          <Text style={styles.hintShort}>Social: …/social · токен пустой → flowflow</Text>
+          <Pressable onPress={onSocialInfo} hitSlop={10} style={styles.infoHit}>
+            <Text style={styles.infoMark}>ⓘ</Text>
+          </Pressable>
+        </View>
         <Text style={styles.label}>URL сервера</Text>
         <TextInput
           style={styles.input}
@@ -595,13 +625,13 @@ export function SettingsScreen() {
             <Text style={styles.btnPrimaryText}>Проверить Flow Social</Text>
           )}
         </Pressable>
-        {validateMsg ? <Text style={styles.smallMsg}>{validateMsg}</Text> : null}
+        {validateMsg ? <Text style={styles.flowHint}>{validateMsg}</Text> : null}
             </>
           ) : null}
         </LiquidGlassPanel>
 
         <Text style={[styles.section, { marginTop: 26 }]}>Шрифт</Text>
-        <Text style={styles.hint}>Minecraftia включён как основной шрифт всего приложения.</Text>
+        <Text style={styles.hint}>Глобально: Minecraft Rus (bundled TTF).</Text>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -664,7 +694,6 @@ const styles = StyleSheet.create({
     color: '#9ca3af',
     marginBottom: 12,
   },
-  mono: { fontFamily: 'Minecraftia', fontSize: 11, color: '#d8b4fe' },
   row: { flexDirection: 'row', gap: 10 },
   rowWrap: { flexDirection: 'row', gap: 10, marginBottom: 8 },
   foldHeader: {
@@ -760,31 +789,59 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
   btnPrimary: {
-    marginTop: 12,
-    backgroundColor: 'rgba(192,132,252,0.28)',
+    marginTop: 10,
+    alignSelf: 'center',
+    minWidth: 220,
+    maxWidth: '92%',
+    backgroundColor: 'rgba(192,132,252,0.26)',
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255,255,255,0.38)',
-    borderRadius: 14,
-    paddingVertical: 14,
+    borderColor: 'rgba(255,255,255,0.32)',
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 18,
     alignItems: 'center',
   },
   btnDisabled: { opacity: 0.65 },
   btnPrimaryText: { color: '#f8f5ff', fontWeight: '800', fontSize: 15 },
   helpBtn: {
-    marginTop: 10,
+    marginTop: 8,
     alignSelf: 'flex-start',
-    paddingHorizontal: 12,
-    paddingVertical: 9,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    borderWidth: 0.5,
-    borderColor: 'rgba(255,255,255,0.3)',
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255,255,255,0.07)',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(255,255,255,0.22)',
   },
-  helpBtnText: { color: '#f5e9ff', fontWeight: '800', fontSize: 12 },
+  helpBtnText: { color: '#f5e9ff', fontWeight: '700', fontSize: 11 },
+  hintRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 4,
+  },
+  hintShort: {
+    flex: 1,
+    fontSize: 12,
+    color: 'rgba(226,214,246,0.72)',
+    lineHeight: 17,
+  },
+  infoHit: { padding: 4 },
+  infoMark: {
+    fontSize: 15,
+    color: 'rgba(196,181,253,0.95)',
+    fontWeight: '700',
+  },
+  flowHint: {
+    marginTop: 8,
+    fontSize: 12,
+    color: 'rgba(245,208,254,0.9)',
+    lineHeight: 18,
+  },
   smallMsg: {
     marginTop: 8,
     fontSize: 13,
-    color: '#e5e7eb',
+    color: 'rgba(226,232,240,0.78)',
     lineHeight: 18,
   },
   okBadge: {

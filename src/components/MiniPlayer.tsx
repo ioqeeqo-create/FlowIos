@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 import { LiquidGlassPanel } from './LiquidGlassPanel';
-import { NEON_CYAN, NEON_PINK, NEON_PURPLE } from '../constants/theme';
+import { FLOW_TEXT_ERROR, NEON_CYAN, NEON_PINK, NEON_PURPLE } from '../constants/theme';
 import { usePlayback } from '../context/PlaybackContext';
 
 function NeonProgressBar({
@@ -184,7 +184,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
   },
-  err: { color: '#fca5a5', fontSize: 11, marginBottom: 6 },
+  err: { color: FLOW_TEXT_ERROR, fontSize: 11, marginBottom: 6, lineHeight: 15 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   cover: { width: 44, height: 44, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.08)' },
   coverPh: { borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(255,255,255,0.2)' },

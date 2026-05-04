@@ -8,6 +8,7 @@ on:
     paths:
       - 'ios/**'
       - 'src/**'
+      - 'assets/**'
       - 'App.tsx'
       - 'index.js'
       - 'package.json'

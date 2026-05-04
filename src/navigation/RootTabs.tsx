@@ -3,7 +3,7 @@ import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import React from 'react';
 import { Animated, Platform, Pressable, StyleSheet, View } from 'react-native';
-import { DEEP_BG, NEON_PURPLE } from '../constants/theme';
+import { DEEP_BG, MINECRAFT_FONT, NEON_PURPLE } from '../constants/theme';
 import Svg, { Circle, Defs, LinearGradient, Stop } from 'react-native-svg';
 import { GlassDock } from '../components/GlassDock';
 import { MiniPlayer } from '../components/MiniPlayer';
@@ -171,6 +171,7 @@ function GlassTabButton({
       <Animated.Text
         numberOfLines={1}
         style={[
+          { fontFamily: MINECRAFT_FONT },
           styles.tabLabel,
           focused ? styles.tabLabelActive : styles.tabLabelInactive,
           {

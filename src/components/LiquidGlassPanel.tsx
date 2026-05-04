@@ -17,6 +17,9 @@ type Props = {
   contentStyle?: StyleProp<ViewStyle>;
 };
 
+/**
+ * Liquid glass: сильный blur фона под карточкой, лёгкая кромка, без «серой коробки».
+ */
 export function LiquidGlassPanel({
   children,
   borderRadius = 24,
@@ -25,6 +28,8 @@ export function LiquidGlassPanel({
   contentStyle,
 }: Props) {
   const radiusStyle = { borderRadius };
+  const blurAmount = intensity === 'chrome' ? 50 : 42;
+  const blurType = Platform.OS === 'ios' ? 'dark' : 'dark';
 
   return (
     <View
@@ -38,9 +43,9 @@ export function LiquidGlassPanel({
         {Platform.OS === 'ios' ? (
           <BlurView
             style={StyleSheet.absoluteFill}
-            blurType="thinMaterialDark"
-            blurAmount={intensity === 'chrome' ? 44 : 28}
-            reducedTransparencyFallbackColor="#151521"
+            blurType={blurType}
+            blurAmount={blurAmount}
+            reducedTransparencyFallbackColor="rgba(12,10,22,0.72)"
           />
         ) : (
           <View style={[StyleSheet.absoluteFill, styles.androidFill]} />
@@ -50,10 +55,7 @@ export function LiquidGlassPanel({
         {intensity === 'chrome' ? (
           <View style={styles.chromeSheen} pointerEvents="none" />
         ) : null}
-        {intensity === 'chrome' ? (
-          <View style={[styles.edgeGlow, radiusStyle]} pointerEvents="none" />
-        ) : null}
-        <View style={[styles.border, radiusStyle]} pointerEvents="none" />
+        <View style={[styles.rim, radiusStyle]} pointerEvents="none" />
         <View style={contentStyle}>{children}</View>
       </View>
     </View>
@@ -62,56 +64,52 @@ export function LiquidGlassPanel({
 
 const styles = StyleSheet.create({
   shadow: {
-    backgroundColor: 'rgba(9,9,18,0.32)',
+    backgroundColor: 'rgba(255,255,255,0.04)',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 16 },
-    shadowOpacity: 0.38,
-    shadowRadius: 24,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 14 },
+    shadowOpacity: 0.35,
+    shadowRadius: 22,
+    elevation: 6,
   },
   shadowChrome: {
     shadowColor: NEON_PURPLE,
-    shadowOpacity: 0.22,
-    shadowRadius: 28,
-    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.18,
+    shadowRadius: 26,
+    shadowOffset: { width: 0, height: 10 },
   },
   clip: {
     overflow: 'hidden',
   },
   androidFill: {
-    backgroundColor: 'rgba(22,22,34,0.92)',
+    backgroundColor: 'rgba(18,16,30,0.55)',
   },
+  /** ~0.2 поверх blur — остаётся «стекло», не плитка */
   tint: {
     ...StyleSheet.absoluteFill,
-    backgroundColor: 'rgba(6, 4, 16, 0.4)',
+    backgroundColor: 'rgba(6, 4, 14, 0.2)',
   },
-  edgeGlow: {
+  rim: {
     ...StyleSheet.absoluteFill,
-    borderWidth: StyleSheet.hairlineWidth * 2,
-    borderColor: 'rgba(255,255,255,0.22)',
+    borderWidth: GLASS_BORDER_WIDTH,
+    borderColor: GLASS_BORDER,
   },
   topBloom: {
     position: 'absolute',
-    top: -48,
-    left: 18,
-    right: 18,
-    height: 84,
+    top: -56,
+    left: 12,
+    right: 12,
+    height: 92,
     borderRadius: 999,
-    backgroundColor: 'rgba(255,255,255,0.16)',
-    opacity: 0.7,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    opacity: 0.55,
   },
   chromeSheen: {
     position: 'absolute',
-    top: 8,
-    left: 28,
-    right: 28,
+    top: 6,
+    left: 22,
+    right: 22,
     height: 1,
     borderRadius: 999,
-    backgroundColor: 'rgba(255,255,255,0.42)',
-  },
-  border: {
-    ...StyleSheet.absoluteFill,
-    borderWidth: 0.5,
-    borderColor: GLASS_BORDER,
+    backgroundColor: 'rgba(255,255,255,0.38)',
   },
 });

@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Animated, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LiquidGlassPanel } from '../components/LiquidGlassPanel';
-import { GLASS_RADIUS_LG } from '../constants/theme';
+import { FLOW_TEXT_ERROR, GLASS_RADIUS_LG } from '../constants/theme';
 import { useSocialAuth } from '../context/SocialAuthContext';
 
 export function AuthScreen() {
@@ -138,5 +138,5 @@ const styles = StyleSheet.create({
   submitText: { color: '#fff', fontWeight: '800' },
   guestBtn: { marginTop: 10, alignItems: 'center', paddingVertical: 8 },
   guestText: { color: '#d8b4fe', fontSize: 13, fontWeight: '700' },
-  err: { color: '#fca5a5', fontSize: 12, marginTop: 8, textAlign: 'center' },
+  err: { color: FLOW_TEXT_ERROR, fontSize: 12, marginTop: 8, textAlign: 'center', lineHeight: 17 },
 });
