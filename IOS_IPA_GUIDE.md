@@ -1,5 +1,9 @@
 # Flow iOS: сервер (шлюз), проверки и сборка IPA
 
+**Репозиторий приложения на GitHub:** [github.com/ioqeeqo-create/FlowIos](https://github.com/ioqeeqo-create/FlowIos)
+
+**Сборка IPA в Actions** включается **один раз**: файл workflow в репо не залит автоматически (у CLI-токена не было scope `workflow`). Сделай **либо** в браузере на GitHub: **Add file → Create new file** → путь `.github/workflows/ios-ipa-unsigned.yml` → вставь YAML из локального файла **`docs/ci-ios-ipa-unsigned.yml`**, начиная со строки `name: iOS unsigned IPA` (верхние комментарии-инструкции не копируй) → Commit. **Либо** выполни `gh auth refresh -h github.com -s workflow`, затем `git add .github/workflows/ios-ipa-unsigned.yml && git commit -m "ci: workflow" && git push` из клона FlowIos. После этого: **Actions → iOS unsigned IPA → Run workflow** → скачай артефакт `FlowIos-unsigned-ipa`.
+
 ## Часть A — что сделать на сервере
 
 Нужен **VPS / домашний сервер с Linux** (или любой хост с **Node.js 18+**). На сервер **не** кладутся твои Spotify / Яндекс / VK токены в `.env` обязательно: их вводишь **в приложении**; на сервере задаётся только **секрет шлюза** и запускается процесс.
@@ -132,9 +136,9 @@ YouTube в шлюзе идёт через Invidious/Piped; полный пари
 
 ### Вариант 1 — GitHub Actions: неподписанный IPA (без платного Apple Developer)
 
-1. Репозиторий с **`FlowIos`** в корне (или поправь пути в workflow под монорепо).
-2. Залей на **GitHub**.
-3. **Actions** → workflow **iOS unsigned IPA** → **Run workflow** (или пуш в ветку из триггера).
+1. Репозиторий уже на GitHub: **[ioqeeqo-create/FlowIos](https://github.com/ioqeeqo-create/FlowIos)** (корень = приложение).
+2. Один раз включи workflow (см. абзац вверху гайда про `docs/ci-ios-ipa-unsigned.yml` или `gh auth refresh -s workflow` + push).
+3. **Actions** → **iOS unsigned IPA** → **Run workflow** (или пуш в `main`, если менялись пути из триггера в workflow).
 4. Скачай артефакт **`FlowIos-unsigned-ipa`** → внутри **`FlowIos-unsigned.ipa`**.
 
 Это **не** финальная подпись Apple: установка через **GBox / AltStore / Sideloadly** своим **Apple ID** (бесплатный профиль ~на 7 дней, потом переподпись).
