@@ -4,7 +4,9 @@ import {
   Alert,
   FlatList,
   Image,
+  Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -182,8 +184,8 @@ export function SearchScreen() {
     ],
   );
 
-  return (
-    <View style={[styles.root, { paddingTop: insets.top + 10 }]}>
+  const listHeader = (
+    <View style={{ paddingTop: insets.top + 10 }}>
       <Text style={[styles.h1, titleFont ? { fontFamily: titleFont } : null]}>
         Поиск
       </Text>
@@ -192,15 +194,18 @@ export function SearchScreen() {
         — отдельные вкладки источника.
       </Text>
 
-      <View style={styles.row}>
+      <View style={styles.searchShell}>
         <TextInput
           style={styles.input}
           placeholder="Трек или исполнитель"
-          placeholderTextColor="#6b7280"
+          placeholderTextColor="rgba(255,255,255,0.38)"
           value={q}
           onChangeText={setQ}
           onSubmitEditing={onSearch}
           returnKeyType="search"
+          autoCorrect={false}
+          clearButtonMode={Platform.OS === 'ios' ? 'while-editing' : 'never'}
+          keyboardAppearance="dark"
         />
         <Pressable
           style={[styles.goBtn, gateReason && styles.goBtnDisabled]}
@@ -217,35 +222,41 @@ export function SearchScreen() {
       {gateReason ? <Text style={styles.gate}>{gateReason}</Text> : null}
 
       <Text style={styles.srcLabel}>Источник</Text>
-      <FlatList
+      <ScrollView
         horizontal
-        data={SOURCES}
-        keyExtractor={i => i.id}
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.chips}
-        renderItem={({ item }) => {
+        keyboardShouldPersistTaps="handled">
+        {SOURCES.map(item => {
           const on = item.id === source;
           return (
             <Pressable
+              key={item.id}
               onPress={() => {
                 setSource(item.id);
                 s.setSearchSource(item.id);
               }}
               style={[styles.chip, on && styles.chipOn]}>
-              <Text style={[styles.chipTxt, on && styles.chipTxtOn]}>
-                {item.label}
-              </Text>
+              <Text style={[styles.chipTxt, on && styles.chipTxtOn]}>{item.label}</Text>
             </Pressable>
           );
-        }}
-      />
+        })}
+      </ScrollView>
 
       {msg ? <Text style={styles.msg}>{msg}</Text> : null}
+    </View>
+  );
 
+  return (
+    <View style={styles.root}>
       <FlatList
         data={tracks}
         keyExtractor={(t, i) => `${t.source}-${t.id}-${i}`}
-        contentContainerStyle={{ paddingBottom: insets.bottom + 120 }}
+        ListHeaderComponent={listHeader}
+        automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
+        keyboardDismissMode="interactive"
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={{ paddingBottom: 28, flexGrow: 1 }}
         renderItem={({ item }) => {
           const key = `${item.source}:${item.id}`;
           const busy = resolvingId === key;
@@ -280,31 +291,46 @@ export function SearchScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#07070d', paddingHorizontal: 16 },
+  root: { flex: 1, backgroundColor: '#07070d' },
   h1: {
-    fontSize: 28,
-    fontWeight: '800',
+    fontSize: 34,
+    fontWeight: '700',
+    letterSpacing: Platform.OS === 'ios' ? -0.8 : 0,
     color: '#faf5ff',
+    paddingHorizontal: 16,
   },
-  sub: { marginTop: 6, fontSize: 12, color: '#9ca3af', marginBottom: 12 },
-  row: { flexDirection: 'row', gap: 8, alignItems: 'center' },
+  sub: {
+    marginTop: 6,
+    fontSize: 13,
+    lineHeight: 18,
+    color: 'rgba(255,255,255,0.45)',
+    marginBottom: 14,
+    paddingHorizontal: 16,
+  },
+  searchShell: {
+    flexDirection: 'row',
+    gap: 10,
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    marginBottom: 4,
+  },
   input: {
     flex: 1,
-    backgroundColor: '#101018',
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: '#2e2e42',
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderRadius: 22,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(255,255,255,0.12)',
+    paddingHorizontal: 16,
+    paddingVertical: Platform.OS === 'ios' ? 14 : 12,
     color: '#fff',
-    fontSize: 16,
+    fontSize: 17,
   },
   goBtn: {
     backgroundColor: '#c084fc',
-    borderRadius: 14,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    minWidth: 88,
+    borderRadius: 20,
+    paddingHorizontal: 18,
+    paddingVertical: 14,
+    minWidth: 92,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -315,6 +341,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#fcd34d',
     lineHeight: 18,
+    paddingHorizontal: 16,
   },
   srcLabel: {
     marginTop: 14,
@@ -322,15 +349,23 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#a78bfa',
     marginBottom: 6,
+    paddingHorizontal: 16,
   },
-  chips: { gap: 8, paddingBottom: 8 },
+  chips: {
+    gap: 8,
+    paddingBottom: 8,
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   chip: {
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: '#151520',
-    borderWidth: 1,
-    borderColor: '#2e2e42',
+    marginRight: 8,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(255,255,255,0.1)',
   },
   chipOn: {
     borderColor: '#c084fc',
@@ -338,14 +373,20 @@ const styles = StyleSheet.create({
   },
   chipTxt: { color: '#d1d5db', fontSize: 13, fontWeight: '600' },
   chipTxtOn: { color: '#f5e9ff' },
-  msg: { marginVertical: 8, fontSize: 13, color: '#e5e7eb' },
+  msg: {
+    marginVertical: 8,
+    fontSize: 13,
+    color: '#e5e7eb',
+    paddingHorizontal: 16,
+  },
   trackRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
     paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#1f1f2e',
+    paddingHorizontal: 16,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(255,255,255,0.08)',
   },
   cover: {
     width: 52,

@@ -1,17 +1,16 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { usePlayback } from '../context/PlaybackContext';
 
 export function MiniPlayer() {
-  const insets = useSafeAreaInsets();
   const { current, playing, togglePlay, stop, error } = usePlayback();
 
   if (!current) return null;
 
   return (
-    <View style={[styles.wrap, { paddingBottom: Math.max(6, insets.bottom > 0 ? 4 : 6) }]}>
+    <View style={styles.wrap}>
       {error ? <Text style={styles.err}>{error}</Text> : null}
+      <View style={styles.sep} />
       <View style={styles.row}>
         <View style={{ flex: 1 }}>
           <Text style={styles.title} numberOfLines={1}>
@@ -34,11 +33,16 @@ export function MiniPlayer() {
 
 const styles = StyleSheet.create({
   wrap: {
-    borderTopWidth: 1,
-    borderTopColor: '#2e2e42',
-    backgroundColor: '#12121c',
-    paddingHorizontal: 12,
-    paddingTop: 8,
+    backgroundColor: 'transparent',
+    paddingHorizontal: 14,
+    paddingTop: 6,
+    paddingBottom: 4,
+  },
+  sep: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    marginBottom: 8,
+    marginHorizontal: -4,
   },
   err: { color: '#fca5a5', fontSize: 11, marginBottom: 6 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 10 },

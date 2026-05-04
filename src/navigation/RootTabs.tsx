@@ -1,16 +1,26 @@
 import { createBottomTabNavigator, BottomTabBar } from '@react-navigation/bottom-tabs';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
-import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import React, { type ComponentProps } from 'react';
+import { Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { GlassDock } from '../components/GlassDock';
 import { MiniPlayer } from '../components/MiniPlayer';
+import {
+  TabIconHome,
+  TabIconLibrary,
+  TabIconSearch,
+  TabIconSettings,
+  TabIconSocial,
+} from './TabNavIcons';
 import { HomeScreen } from '../screens/HomeScreen';
 import { PlaceholderScreen } from '../screens/PlaceholderScreen';
 import { SearchScreen } from '../screens/SearchScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
 
 const Tab = createBottomTabNavigator();
+
+type TabBarComponentProps = ComponentProps<typeof BottomTabBar>;
 
 const NavTheme = {
   ...DefaultTheme,
@@ -24,23 +34,40 @@ const NavTheme = {
   },
 };
 
-function tabIcon(focused: boolean, glyph: string) {
+function tabSlot(focused: boolean, node: React.ReactNode) {
   return (
-    <View style={[styles.tabGlyphWrap, focused && styles.tabGlyphWrapActive]}>
-      <Text style={[styles.tabGlyph, focused && styles.tabGlyphActive]}>{glyph}</Text>
-    </View>
+    <View style={[styles.tabGlyphWrap, focused && styles.tabGlyphWrapActive]}>{node}</View>
   );
 }
 
 export function RootTabs() {
   const insets = useSafeAreaInsets();
 
-  const renderTabBar = (props: BottomTabBarProps) => (
-    <View style={styles.tabBarCol}>
-      <MiniPlayer />
-      <BottomTabBar {...props} />
-    </View>
-  );
+  const renderTabBar = (props: BottomTabBarProps) => {
+    const barProps = {
+      ...props,
+      insets: { ...props.insets, bottom: 0 },
+      style: [
+        (props as TabBarComponentProps).style,
+        {
+          backgroundColor: 'transparent',
+          borderTopWidth: 0,
+          elevation: 0,
+          shadowOpacity: 0,
+          height: Platform.OS === 'ios' ? 52 : 56 + insets.bottom,
+          paddingBottom: Platform.OS === 'ios' ? 6 : Math.max(insets.bottom, 8),
+          paddingTop: 4,
+        },
+      ],
+    } satisfies TabBarComponentProps;
+
+    return (
+      <GlassDock>
+        <MiniPlayer />
+        <BottomTabBar {...barProps} />
+      </GlassDock>
+    );
+  };
 
   return (
     <NavigationContainer theme={NavTheme}>
@@ -49,11 +76,9 @@ export function RootTabs() {
         screenOptions={{
           headerShown: false,
           tabBarStyle: {
-            backgroundColor: '#0a0a12',
-            borderTopColor: '#27273a',
-            height: 56 + insets.bottom,
-            paddingBottom: Math.max(insets.bottom, 8),
-            paddingTop: 6,
+            backgroundColor: 'transparent',
+            borderTopWidth: 0,
+            elevation: 0,
           },
           tabBarActiveTintColor: '#c084fc',
           tabBarInactiveTintColor: '#6b6b80',
@@ -64,7 +89,8 @@ export function RootTabs() {
           component={HomeScreen}
           options={{
             tabBarLabel: 'Моя волна',
-            tabBarIcon: ({ focused }) => tabIcon(focused, '⌂'),
+            tabBarIcon: ({ color, focused }) =>
+              tabSlot(focused, <TabIconHome color={color} focused={focused} />),
           }}
         />
         <Tab.Screen
@@ -72,7 +98,8 @@ export function RootTabs() {
           component={SearchScreen}
           options={{
             tabBarLabel: 'Поиск',
-            tabBarIcon: ({ focused }) => tabIcon(focused, '⌕'),
+            tabBarIcon: ({ color, focused }) =>
+              tabSlot(focused, <TabIconSearch color={color} focused={focused} />),
           }}
         />
         <Tab.Screen
@@ -81,7 +108,8 @@ export function RootTabs() {
           initialParams={{ title: 'Библиотека', subtitle: 'Плейлисты и импорт' }}
           options={{
             tabBarLabel: 'Библиотека',
-            tabBarIcon: ({ focused }) => tabIcon(focused, '▤'),
+            tabBarIcon: ({ color, focused }) =>
+              tabSlot(focused, <TabIconLibrary color={color} focused={focused} />),
           }}
         />
         <Tab.Screen
@@ -90,7 +118,8 @@ export function RootTabs() {
           initialParams={{ title: 'Социальное', subtitle: 'Комнаты и друзья' }}
           options={{
             tabBarLabel: 'Соц.',
-            tabBarIcon: ({ focused }) => tabIcon(focused, '◎'),
+            tabBarIcon: ({ color, focused }) =>
+              tabSlot(focused, <TabIconSocial color={color} focused={focused} />),
           }}
         />
         <Tab.Screen
@@ -98,7 +127,8 @@ export function RootTabs() {
           component={SettingsScreen}
           options={{
             tabBarLabel: 'Настройки',
-            tabBarIcon: ({ focused }) => tabIcon(focused, '⚙'),
+            tabBarIcon: ({ color, focused }) =>
+              tabSlot(focused, <TabIconSettings color={color} focused={focused} />),
           }}
         />
       </Tab.Navigator>
@@ -107,22 +137,18 @@ export function RootTabs() {
 }
 
 const styles = StyleSheet.create({
-  tabBarCol: {
-    backgroundColor: '#0a0a12',
-  },
   tabGlyphWrap: {
-    paddingHorizontal: 10,
-    paddingVertical: 2,
-    borderRadius: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   tabGlyphWrapActive: {
-    backgroundColor: 'rgba(168, 85, 247, 0.2)',
-  },
-  tabGlyph: {
-    fontSize: 18,
-    color: '#6b6b80',
-  },
-  tabGlyphActive: {
-    color: '#e9d5ff',
+    backgroundColor: 'rgba(236, 72, 153, 0.18)',
+    shadowColor: '#ec4899',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.45,
+    shadowRadius: 8,
   },
 });

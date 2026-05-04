@@ -1,5 +1,4 @@
-# Сборка неподписанного .ipa для iPhone (device, arm64).
-# Артефакт подписываешь на установке (GBox / AltStore / Sideloadly) своим Apple ID.
+# Сборка неподписанного .ipa (arm64). Артефакт: Flow.ipa → GitHub Release `flow-ipa`.
 name: iOS unsigned IPA
 
 on:
@@ -14,6 +13,9 @@ on:
       - 'package.json'
       - 'package-lock.json'
       - '.github/workflows/ios-ipa-unsigned.yml'
+
+permissions:
+  contents: write
 
 jobs:
   ios-ipa:
@@ -50,19 +52,32 @@ jobs:
             DEVELOPMENT_TEAM="" \
             EXPANDED_CODE_SIGN_IDENTITY=""
 
-      - name: Pack IPA
+      - name: Pack Flow.ipa
         run: |
           set -e
           APP_PATH="$GITHUB_WORKSPACE/ios-dd/Build/Products/Release-iphoneos/FlowIos.app"
           test -d "$APP_PATH"
           OUT="$GITHUB_WORKSPACE/ios-dd/Build/Products/Release-iphoneos"
           cd "$OUT"
-          rm -rf Payload FlowIos-unsigned.ipa
+          rm -rf Payload Flow.ipa
           mkdir Payload
           cp -R FlowIos.app Payload/
-          zip -r FlowIos-unsigned.ipa Payload
+          zip -r Flow.ipa Payload
 
       - uses: actions/upload-artifact@v4
         with:
-          name: FlowIos-unsigned-ipa
-          path: ios-dd/Build/Products/Release-iphoneos/FlowIos-unsigned.ipa
+          name: Flow-ipa
+          path: ios-dd/Build/Products/Release-iphoneos/Flow.ipa
+
+      - name: GitHub Release (flow-ipa)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: flow-ipa
+          name: Flow.ipa (unsigned)
+          body: |
+            Неподписанный IPA с последнего коммита `${{ github.sha }}`.
+            Установка: AltStore / Sideloadly / GBox + свой Apple ID.
+          files: ios-dd/Build/Products/Release-iphoneos/Flow.ipa
+          make_latest: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -2,6 +2,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -188,7 +190,10 @@ export function SettingsScreen() {
   }, [resetAppearance]);
 
   return (
-    <View style={[styles.root, { paddingTop: insets.top + 8 }]}>
+    <KeyboardAvoidingView
+      style={[styles.root, { paddingTop: insets.top + 8 }]}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={0}>
       <Text style={[styles.screenTitle, titleFont ? { fontFamily: titleFont } : null]}>
         Настройки
       </Text>
@@ -197,7 +202,9 @@ export function SettingsScreen() {
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={{ paddingBottom: insets.bottom + 32 }}
-        keyboardShouldPersistTaps="handled">
+        keyboardShouldPersistTaps="handled"
+        automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
+        keyboardDismissMode="interactive">
         <Text style={styles.section}>Оформление</Text>
         <Text style={styles.hint}>
           Фото и GIF из галереи — фон и обложка в шапке «Моя волна».
@@ -232,6 +239,7 @@ export function SettingsScreen() {
           placeholderTextColor="#6b7280"
           autoCapitalize="none"
           autoCorrect={false}
+          keyboardAppearance="dark"
           value={gatewayBase}
           onChangeText={setGatewayBase}
         />
@@ -375,7 +383,7 @@ export function SettingsScreen() {
           })}
         </ScrollView>
       </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
