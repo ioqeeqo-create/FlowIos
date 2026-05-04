@@ -12,6 +12,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LiquidGlassPanel } from '../components/LiquidGlassPanel';
 import { useFlowSettings } from '../context/FlowSettingsContext';
+import { useSocialAuth } from '../context/SocialAuthContext';
 
 type PublicProfile = {
   username: string;
@@ -28,7 +29,9 @@ function authHeaders(token: string) {
 
 export function SocialScreen() {
   const insets = useSafeAreaInsets();
-  const { apiBase, apiToken, socialUsername } = useFlowSettings();
+  const { apiBase, apiToken } = useFlowSettings();
+  const { username: authUsername } = useSocialAuth();
+  const socialUsername = String(authUsername || 'flow').trim().toLowerCase();
   const [selfProfile, setSelfProfile] = useState<PublicProfile | null>(null);
   const [friends, setFriends] = useState<PublicProfile[]>([]);
   const [loading, setLoading] = useState(false);

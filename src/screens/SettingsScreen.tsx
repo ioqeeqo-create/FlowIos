@@ -22,6 +22,7 @@ import {
 import { LiquidGlassPanel } from '../components/LiquidGlassPanel';
 import { fontFamilyForId } from '../constants/fontChoices';
 import { useFlowSettings } from '../context/FlowSettingsContext';
+import { useSocialAuth } from '../context/SocialAuthContext';
 
 if (Platform.OS === 'ios') {
   LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -58,6 +59,7 @@ async function validateFlowSocialToken(
 
 export function SettingsScreen() {
   const insets = useSafeAreaInsets();
+  const { username: authUsername, logout } = useSocialAuth();
   const s = useFlowSettings();
   const {
     backgroundUri,
@@ -69,7 +71,6 @@ export function SettingsScreen() {
     fontId,
     apiBase,
     apiToken,
-    socialUsername,
     gatewayBase,
     gatewaySecret,
     spotifyToken,
@@ -85,7 +86,6 @@ export function SettingsScreen() {
     setFontId,
     setApiBase,
     setApiToken,
-    setSocialUsername,
     setGatewayBase,
     setGatewaySecret,
     setSpotifyToken,
@@ -101,7 +101,6 @@ export function SettingsScreen() {
 
   const [localBase, setLocalBase] = useState(apiBase);
   const [localToken, setLocalToken] = useState(apiToken);
-  const [localSocialUsername, setLocalSocialUsername] = useState(socialUsername);
   const [validating, setValidating] = useState(false);
   const [validateMsg, setValidateMsg] = useState<string | null>(null);
   const [valYandexMsg, setValYandexMsg] = useState<string | null>(null);
@@ -123,8 +122,7 @@ export function SettingsScreen() {
   useEffect(() => {
     setLocalBase(apiBase);
     setLocalToken(apiToken);
-    setLocalSocialUsername(socialUsername);
-  }, [apiBase, apiToken, socialUsername]);
+  }, [apiBase, apiToken]);
 
   const titleFont = fontFamilyForId(fontId);
 
@@ -162,7 +160,6 @@ export function SettingsScreen() {
     setValidateMsg(null);
     setApiBase(localBase);
     setApiToken(localToken);
-    setSocialUsername(localSocialUsername);
     setValidating(true);
     try {
       const r = await validateFlowSocialToken(localBase, localToken);
@@ -173,7 +170,7 @@ export function SettingsScreen() {
     } finally {
       setValidating(false);
     }
-  }, [localBase, localSocialUsername, localToken, setApiBase, setApiToken, setSocialUsername]);
+  }, [localBase, localToken, setApiBase, setApiToken]);
 
   const onCheckGateway = useCallback(async () => {
     setGatewayMsg(null);
@@ -555,15 +552,11 @@ export function SettingsScreen() {
           value={localToken}
           onChangeText={setLocalToken}
         />
-        <Text style={styles.label}>Мой username (для вкладки Соц)</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="flow"
-          placeholderTextColor="#6b7280"
-          autoCapitalize="none"
-          value={localSocialUsername}
-          onChangeText={setLocalSocialUsername}
-        />
+        <Text style={styles.label}>Текущий аккаунт</Text>
+        <Text style={styles.smallMsg}>{authUsername || 'Не выполнен вход'}</Text>
+        <Pressable style={styles.helpBtn} onPress={() => void logout()}>
+          <Text style={styles.helpBtnText}>Выйти из аккаунта</Text>
+        </Pressable>
         <Pressable
           style={[styles.btnPrimary, validating && styles.btnDisabled]}
           onPress={onValidateSocial}

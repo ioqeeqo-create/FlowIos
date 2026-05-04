@@ -13,7 +13,9 @@ import { AppBackground } from './src/components/AppBackground';
 import { MINECRAFT_FONT } from './src/constants/theme';
 import { FlowSettingsProvider } from './src/context/FlowSettingsContext';
 import { PlaybackProvider } from './src/context/PlaybackContext';
+import { SocialAuthProvider, useSocialAuth } from './src/context/SocialAuthContext';
 import { RootTabs } from './src/navigation/RootTabs';
+import { AuthScreen } from './src/screens/AuthScreen';
 
 Text.defaultProps = {
   ...(Text.defaultProps || {}),
@@ -30,15 +32,26 @@ function App() {
       <SafeAreaProvider>
         <FlowSettingsProvider>
           <GatewayTokenWarmup />
-          <PlaybackProvider>
-            <StatusBar barStyle="light-content" />
-            <AppBackground>
-              <RootTabs />
-            </AppBackground>
-          </PlaybackProvider>
+          <SocialAuthProvider>
+            <PlaybackProvider>
+              <StatusBar barStyle="light-content" />
+              <AppBackground>
+                <AppEntry />
+              </AppBackground>
+            </PlaybackProvider>
+          </SocialAuthProvider>
         </FlowSettingsProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
+  );
+}
+
+function AppEntry() {
+  const { ready, username } = useSocialAuth();
+  if (!ready) return null;
+  if (!username) return <AuthScreen />;
+  return (
+    <RootTabs />
   );
 }
 
