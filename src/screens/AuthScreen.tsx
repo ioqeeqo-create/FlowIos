@@ -1,17 +1,29 @@
-import React, { useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Animated, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LiquidGlassPanel } from '../components/LiquidGlassPanel';
+import { GLASS_RADIUS_LG } from '../constants/theme';
 import { useSocialAuth } from '../context/SocialAuthContext';
 
 export function AuthScreen() {
   const insets = useSafeAreaInsets();
   const { login, register, enterGuest } = useSocialAuth();
+  const rise = useRef(new Animated.Value(0)).current;
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    Animated.spring(rise, {
+      toValue: 1,
+      damping: 15,
+      stiffness: 130,
+      mass: 0.85,
+      useNativeDriver: true,
+    }).start();
+  }, [rise]);
 
   const submit = async () => {
     setBusy(true);
@@ -28,10 +40,24 @@ export function AuthScreen() {
 
   return (
     <View style={[styles.root, { paddingTop: insets.top + 18, paddingBottom: insets.bottom + 14 }]}>
-      <View style={styles.centerWrap}>
-      <LiquidGlassPanel style={styles.card} contentStyle={styles.cardContent}>
+      <Animated.View
+        style={[
+          styles.centerWrap,
+          {
+            opacity: rise,
+            transform: [
+              {
+                translateY: rise.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [28, 0],
+                }),
+              },
+            ],
+          },
+        ]}>
+      <LiquidGlassPanel borderRadius={GLASS_RADIUS_LG} intensity="chrome" style={styles.card} contentStyle={styles.cardContent}>
         <Text style={styles.logo}>Flow</Text>
-        <Text style={styles.subtitle}>Музыка вокруг тебя</Text>
+        <Text style={styles.subtitle}>Liquid glass · neon depth · музыка вокруг тебя</Text>
         <View style={styles.modes}>
           <Pressable style={[styles.modeBtn, mode === 'login' && styles.modeBtnActive]} onPress={() => setMode('login')}>
             <Text style={styles.modeText}>Вход</Text>
@@ -65,7 +91,7 @@ export function AuthScreen() {
         </Pressable>
         {message ? <Text style={styles.err}>{message}</Text> : null}
       </LiquidGlassPanel>
-      </View>
+      </Animated.View>
     </View>
   );
 }

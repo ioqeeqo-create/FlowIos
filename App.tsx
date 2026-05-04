@@ -10,6 +10,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GatewayTokenWarmup } from './src/bootstrap/GatewayTokenWarmup';
 import { AppBackground } from './src/components/AppBackground';
+import { BootLoading } from './src/components/BootLoading';
 import { MINECRAFT_FONT } from './src/constants/theme';
 import { FlowSettingsProvider } from './src/context/FlowSettingsContext';
 import { PlaybackProvider } from './src/context/PlaybackContext';
@@ -48,7 +49,7 @@ function App() {
 
 function AppEntry() {
   const { ready, username } = useSocialAuth();
-  if (!ready) return null;
+  if (!ready) return <BootLoading />;
   if (!username) return <AuthScreen />;
   return (
     <RootTabs />

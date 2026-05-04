@@ -292,7 +292,7 @@ export function SettingsScreen() {
       <Text style={[styles.screenTitle, titleFont ? { fontFamily: titleFont } : null]}>
         Настройки
       </Text>
-      <Text style={styles.screenSub}>Liquid glass, медиа, профили, шлюз и токены.</Text>
+      <Text style={styles.screenSub}>UI · Media · Blur · Profiles · Gateway · Tokens · Social</Text>
 
       <ScrollView
         style={styles.scroll}
@@ -302,7 +302,7 @@ export function SettingsScreen() {
         keyboardDismissMode="interactive">
         <LiquidGlassPanel intensity="chrome" style={styles.appearanceGlass} contentStyle={styles.appearanceContent}>
           <View style={styles.glassHighlight} pointerEvents="none" />
-          <SectionHeader id="appearance" title="Интерфейс" />
+          <SectionHeader id="appearance" title="UI" />
           {openSections.appearance ? (
             <>
               <Text style={styles.hint}>По умолчанию всё уже настроено под рабочий шлюз и стеклянный UI.</Text>
@@ -314,7 +314,7 @@ export function SettingsScreen() {
         </LiquidGlassPanel>
 
         <LiquidGlassPanel intensity="chrome" style={styles.gatewayGlass} contentStyle={styles.gatewayGlassContent}>
-          <SectionHeader id="media" title="Фон и обложка" />
+          <SectionHeader id="media" title="Media" />
           {openSections.media ? (
             <>
               <Text style={styles.hint}>Отдельно меняются фон, обложка профиля и баннер. Поддержка фото и GIF.</Text>
@@ -351,7 +351,7 @@ export function SettingsScreen() {
         </LiquidGlassPanel>
 
         <LiquidGlassPanel intensity="chrome" style={styles.gatewayGlass} contentStyle={styles.gatewayGlassContent}>
-          <SectionHeader id="blur" title="Размытие и яркость" />
+          <SectionHeader id="blur" title="Blur" />
           {openSections.blur ? (
             <>
               <Text style={styles.label}>Поворот фона: {backgroundRotateDeg.toFixed(0)}°</Text>
@@ -386,7 +386,7 @@ export function SettingsScreen() {
         </LiquidGlassPanel>
 
         <LiquidGlassPanel intensity="chrome" style={styles.gatewayGlass} contentStyle={styles.gatewayGlassContent}>
-          <SectionHeader id="profiles" title="Профили" />
+          <SectionHeader id="profiles" title="Profiles" />
           {openSections.profiles ? (
             <>
               {profileMocks.map(p => (
@@ -406,7 +406,7 @@ export function SettingsScreen() {
           intensity="chrome"
           style={styles.gatewayGlass}
           contentStyle={styles.gatewayGlassContent}>
-          <SectionHeader id="gateway" title="Шлюз музыки (Node на VPS/ПК)" />
+          <SectionHeader id="gateway" title="Gateway" />
           {openSections.gateway ? (
             <>
           <Text style={styles.hint}>
@@ -462,7 +462,7 @@ export function SettingsScreen() {
           intensity="chrome"
           style={styles.gatewayGlass}
           contentStyle={styles.gatewayGlassContent}>
-          <SectionHeader id="tokens" title="Токены источников" />
+          <SectionHeader id="tokens" title="Tokens" />
           {openSections.tokens ? (
             <>
         <Text style={styles.label}>Spotify access token</Text>
@@ -541,7 +541,7 @@ export function SettingsScreen() {
           intensity="chrome"
           style={styles.gatewayGlass}
           contentStyle={styles.gatewayGlassContent}>
-          <SectionHeader id="social" title="Flow Social (комнаты / друзья)" />
+          <SectionHeader id="social" title="Social" />
           {openSections.social ? (
             <>
         <Text style={styles.hint}>

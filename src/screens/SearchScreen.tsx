@@ -52,7 +52,15 @@ const SOURCES: { id: SearchSource; label: string }[] = [
 export function SearchScreen() {
   const insets = useSafeAreaInsets();
   const s = useFlowSettings();
-  const { playTrack, playOrToggleTrack, openFullPlayer, toggleFavorite, isFavorite } = usePlayback();
+  const {
+    playTrack,
+    playOrToggleTrack,
+    current,
+    playing,
+    openFullPlayer,
+    toggleFavorite,
+    isFavorite,
+  } = usePlayback();
   const titleFont = fontFamilyForId(s.fontId);
   const [fade] = useState(() => new Animated.Value(0));
 
@@ -75,12 +83,15 @@ export function SearchScreen() {
     if (s.hydrated) setSource(s.searchSource);
   }, [s.hydrated, s.searchSource]);
 
-  const tokens: MusicTokens = {
-    spotifyToken: s.spotifyToken,
-    yandexToken: s.yandexToken,
-    vkToken: s.vkToken,
-    soundcloudClientId: s.soundcloudClientId,
-  };
+  const tokens: MusicTokens = useMemo(
+    () => ({
+      spotifyToken: s.spotifyToken,
+      yandexToken: s.yandexToken,
+      vkToken: s.vkToken,
+      soundcloudClientId: s.soundcloudClientId,
+    }),
+    [s.spotifyToken, s.yandexToken, s.vkToken, s.soundcloudClientId],
+  );
 
   const gwSecret = useMemo(
     () => s.gatewaySecret.trim() || DEFAULT_GATEWAY_SECRET,
@@ -154,7 +165,11 @@ export function SearchScreen() {
     async (track: FlowTrack) => {
       setMsg(null);
       const src = String(track.source || '').toLowerCase();
+      const samePlaying =
+        current &&
+        `${current.source}:${current.id}` === `${track.source}:${track.id}`;
       playOrToggleTrack(track);
+      if (samePlaying) return;
       if (src === 'yandex' && !s.yandexValidated) {
         Alert.alert('', 'Нужен активный токен Яндекса.');
         return;
@@ -183,6 +198,7 @@ export function SearchScreen() {
     [
       playTrack,
       playOrToggleTrack,
+      current,
       openFullPlayer,
       gwSecret,
       s.gatewayBase,
@@ -210,8 +226,8 @@ export function SearchScreen() {
         Поиск
       </Text>
       <Text style={styles.sub}>
-        Шлюз на Node (как десктоп). Режим «Авто» = Spotify → SoundCloud → Audius. Яндекс / VK / YouTube
-        — отдельные вкладки источника.
+        Ядро Flow: шлюз на Node. Режим «Авто» — умный fallback: Spotify → SoundCloud → Audius. Яндекс, VK и
+        YouTube — отдельные источники (нужны токены там, где требуется).
       </Text>
 
       <View style={styles.searchShell}>
@@ -282,35 +298,50 @@ export function SearchScreen() {
           const busy = resolvingId === key;
           return (
             <LiquidGlassPanel
-              borderRadius={18}
+              borderRadius={22}
               style={styles.trackGlass}
-              contentStyle={styles.trackRow}
-            >
-            <Pressable
-              style={styles.trackPress}
-              onPress={() => onPlay(item)}
-              disabled={Boolean(busy)}>
-              {item.cover ? (
-                <Image source={{ uri: item.cover }} style={styles.cover} />
-              ) : (
-                <View style={[styles.cover, styles.coverPh]}>
-                  <Text style={styles.coverPhTxt}>♪</Text>
-                </View>
-              )}
-              <View style={{ flex: 1 }}>
-                <Text style={styles.tTitle} numberOfLines={2}>
-                  {item.title}
-                </Text>
-                <Text style={styles.tArt} numberOfLines={1}>
-                  {item.artist}
-                </Text>
-                <Text style={styles.tSrc}>{item.source}</Text>
+              contentStyle={styles.trackRow}>
+              <View style={styles.trackPress}>
+                <Pressable
+                  style={styles.trackMain}
+                  onPress={() => onPlay(item)}
+                  disabled={Boolean(busy)}>
+                  {item.cover ? (
+                    <Image source={{ uri: item.cover }} style={styles.cover} />
+                  ) : (
+                    <View style={[styles.cover, styles.coverPh]}>
+                      <Text style={styles.coverPhTxt}>♪</Text>
+                    </View>
+                  )}
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.tTitle} numberOfLines={2}>
+                      {item.title}
+                    </Text>
+                    <Text style={styles.tArt} numberOfLines={1}>
+                      {item.artist}
+                    </Text>
+                    <Text style={styles.tSrc}>{item.source}</Text>
+                  </View>
+                </Pressable>
+                <Pressable
+                  style={styles.playMini}
+                  onPress={() => onPlay(item)}
+                  disabled={Boolean(busy)}>
+                  <Text style={styles.playMiniTxt}>
+                    {busy
+                      ? '…'
+                      : current &&
+                          `${current.source}:${current.id}` === `${item.source}:${item.id}` &&
+                          playing
+                        ? '❚❚'
+                        : '▶'}
+                  </Text>
+                </Pressable>
+                <Pressable style={styles.likeBtn} onPress={() => toggleFavorite(item)}>
+                  <Text style={styles.likeTxt}>{isFavorite(item) ? '♥' : '♡'}</Text>
+                </Pressable>
+                {busy ? <ActivityIndicator color="#c084fc" /> : null}
               </View>
-              <Pressable style={styles.likeBtn} onPress={() => toggleFavorite(item)}>
-                <Text style={styles.likeTxt}>{isFavorite(item) ? '♥' : '♡'}</Text>
-              </Pressable>
-              {busy ? <ActivityIndicator color="#c084fc" /> : null}
-            </Pressable>
             </LiquidGlassPanel>
           );
         }}
@@ -410,13 +441,30 @@ const styles = StyleSheet.create({
   },
   trackRow: {
     paddingVertical: 10,
-    paddingHorizontal: 14,
+    paddingHorizontal: 12,
   },
   trackPress: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 8,
+  },
+  trackMain: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 12,
   },
+  playMini: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(34,211,238,0.18)',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(255,255,255,0.2)',
+  },
+  playMiniTxt: { color: '#ecfeff', fontSize: 13, fontWeight: '800' },
   trackGlass: {
     marginHorizontal: 14,
     marginVertical: 5,

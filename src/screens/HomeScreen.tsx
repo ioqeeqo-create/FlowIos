@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
+  Animated,
   ImageBackground,
   ScrollView,
   StyleSheet,
@@ -8,6 +9,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LiquidGlassPanel } from '../components/LiquidGlassPanel';
+import { GLASS_RADIUS_LG } from '../constants/theme';
 import { fontFamilyForId } from '../constants/fontChoices';
 import { useFlowSettings } from '../context/FlowSettingsContext';
 
@@ -15,34 +17,90 @@ export function HomeScreen() {
   const insets = useSafeAreaInsets();
   const { bannerUri, fontId } = useFlowSettings();
   const titleFont = fontFamilyForId(fontId);
+  const intro = useRef(new Animated.Value(0)).current;
+  const drift = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.spring(intro, {
+      toValue: 1,
+      damping: 16,
+      stiffness: 120,
+      mass: 0.9,
+      useNativeDriver: true,
+    }).start();
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(drift, { toValue: 1, duration: 8000, useNativeDriver: true }),
+        Animated.timing(drift, { toValue: 0, duration: 8000, useNativeDriver: true }),
+      ]),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [drift, intro]);
 
   const body = (
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollBody}>
-      <View style={styles.headerRow}>
-        <View style={{ flex: 1 }}>
-          <Text style={[styles.kicker, titleFont ? { fontFamily: titleFont } : null]}>
-            Главная
-          </Text>
-          <Text style={styles.kickerSub}>Персональное радио</Text>
+      <Animated.View
+        style={{
+          opacity: intro,
+          transform: [
+            {
+              translateY: intro.interpolate({
+                inputRange: [0, 1],
+                outputRange: [22, 0],
+              }),
+            },
+          ],
+        }}>
+        <View style={styles.headerRow}>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.kicker, titleFont ? { fontFamily: titleFont } : null]}>Главная</Text>
+            <Text style={styles.kickerSub}>Персональное радио</Text>
+            <Text style={styles.ambient}>
+              Спокойный визуальный слой — музыка и соц живут на соседних вкладках, чтобы ничего не отвлекало
+              от атмосферы.
+            </Text>
+          </View>
         </View>
-      </View>
 
-      <LiquidGlassPanel style={styles.card} contentStyle={styles.cardContent}>
-        <ImageBackground
-          source={{ uri: bannerUri || 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=1200' }}
-          imageStyle={styles.bannerImage}
-          style={styles.banner}>
-          <View style={styles.bannerDarken} />
-          <Text style={[styles.cardTitle, titleFont ? { fontFamily: titleFont } : null]}>
-            stalk ur socials
-          </Text>
-          <Text style={styles.cardSub}>based on your vibe</Text>
-        </ImageBackground>
-      </LiquidGlassPanel>
+        <Animated.View
+          style={{
+            transform: [
+              {
+                translateY: drift.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [0, -4],
+                }),
+              },
+            ],
+          }}>
+          <LiquidGlassPanel
+            borderRadius={GLASS_RADIUS_LG}
+            intensity="chrome"
+            style={styles.card}
+            contentStyle={styles.cardContent}>
+            <ImageBackground
+              source={{
+                uri:
+                  bannerUri ||
+                  'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=1200',
+              }}
+              imageStyle={styles.bannerImage}
+              style={styles.banner}>
+              <View style={styles.bannerDarken} />
+              <Text style={[styles.cardTitle, titleFont ? { fontFamily: titleFont } : null]}>
+                stalk ur socials
+              </Text>
+              <Text style={styles.cardSub}>based on your vibe</Text>
+            </ImageBackground>
+          </LiquidGlassPanel>
+        </Animated.View>
 
-      <Text style={styles.hint}>
-        Поиск и воспроизведение — вкладка «Поиск». Профили и друзья перенесены во вкладку «Соц».
-      </Text>
+        <View style={styles.hintBlock}>
+          <Text style={styles.hintLine}>Поиск и воспроизведение — во вкладке «Поиск».</Text>
+          <Text style={styles.hintLine}>Социальные функции — во вкладке «Соц».</Text>
+        </View>
+      </Animated.View>
     </ScrollView>
   );
 
@@ -67,7 +125,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 14,
-    marginBottom: 22,
+    marginBottom: 20,
   },
   kicker: {
     fontSize: 22,
@@ -76,25 +134,31 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
   },
   kickerSub: { fontSize: 13, color: '#a1a1b0', marginTop: 2 },
+  ambient: {
+    marginTop: 10,
+    fontSize: 12,
+    lineHeight: 18,
+    color: 'rgba(196,181,253,0.55)',
+  },
   card: {
-    borderRadius: 20,
+    borderRadius: GLASS_RADIUS_LG,
   },
   cardContent: {
     padding: 12,
   },
   banner: {
-    height: 140,
-    borderRadius: 16,
+    height: 160,
+    borderRadius: 20,
     overflow: 'hidden',
-    padding: 14,
+    padding: 16,
     justifyContent: 'flex-end',
   },
   bannerImage: {
-    borderRadius: 16,
+    borderRadius: 20,
   },
   bannerDarken: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(10,6,20,0.35)',
+    ...StyleSheet.absoluteFill,
+    backgroundColor: 'rgba(10,6,20,0.4)',
   },
   cardTitle: {
     fontSize: 24,
@@ -105,10 +169,19 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#c4b5fd',
   },
-  hint: {
-    marginTop: 20,
+  hintBlock: {
+    marginTop: 22,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(255,255,255,0.1)',
+    gap: 8,
+  },
+  hintLine: {
     fontSize: 13,
-    lineHeight: 19,
+    lineHeight: 20,
     color: '#9ca3af',
   },
 });

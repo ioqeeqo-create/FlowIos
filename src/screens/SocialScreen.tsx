@@ -110,7 +110,7 @@ export function SocialScreen() {
       <View style={styles.headRow}>
         <View>
           <Text style={styles.title}>Соц</Text>
-          <Text style={styles.subtitle}>Профили и друзья из твоего Flow Social</Text>
+          <Text style={styles.subtitle}>Профили и друзья из Flow Social — стеклянные карточки и неоновый онлайн</Text>
         </View>
         <Pressable style={styles.meBtn} onPress={() => selfProfile && setSelectedProfile(selfProfile)}>
           <Text style={styles.meBtnText}>Мой профиль</Text>
