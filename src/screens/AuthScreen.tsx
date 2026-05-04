@@ -6,7 +6,7 @@ import { useSocialAuth } from '../context/SocialAuthContext';
 
 export function AuthScreen() {
   const insets = useSafeAreaInsets();
-  const { login, register } = useSocialAuth();
+  const { login, register, enterGuest } = useSocialAuth();
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -60,6 +60,9 @@ export function AuthScreen() {
         <Pressable style={styles.submit} onPress={submit} disabled={busy}>
           {busy ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitText}>{mode === 'login' ? 'Войти' : 'Создать аккаунт'}</Text>}
         </Pressable>
+        <Pressable style={styles.guestBtn} onPress={() => void enterGuest()}>
+          <Text style={styles.guestText}>Войти как гость</Text>
+        </Pressable>
         {message ? <Text style={styles.err}>{message}</Text> : null}
       </LiquidGlassPanel>
       </View>
@@ -107,5 +110,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   submitText: { color: '#fff', fontWeight: '800' },
+  guestBtn: { marginTop: 10, alignItems: 'center', paddingVertical: 8 },
+  guestText: { color: '#d8b4fe', fontSize: 13, fontWeight: '700' },
   err: { color: '#fca5a5', fontSize: 12, marginTop: 8, textAlign: 'center' },
 });

@@ -30,7 +30,7 @@ function authHeaders(token: string) {
 export function SocialScreen() {
   const insets = useSafeAreaInsets();
   const { apiBase, apiToken } = useFlowSettings();
-  const { username: authUsername } = useSocialAuth();
+  const { username: authUsername, isGuest } = useSocialAuth();
   const socialUsername = String(authUsername || 'flow').trim().toLowerCase();
   const [selfProfile, setSelfProfile] = useState<PublicProfile | null>(null);
   const [friends, setFriends] = useState<PublicProfile[]>([]);
@@ -122,19 +122,24 @@ export function SocialScreen() {
       </Pressable>
 
       {loading ? <ActivityIndicator color="#c084fc" style={{ marginTop: 8 }} /> : null}
+      {isGuest ? (
+        <Text style={styles.msg}>Гостевой режим: соц-синхронизация отключена. Войди в аккаунт для друзей и профилей.</Text>
+      ) : null}
       {message ? <Text style={styles.msg}>{message}</Text> : null}
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 34 }}>
-        {selfProfile ? profileCard(selfProfile, true) : null}
+        {!isGuest && selfProfile ? profileCard(selfProfile, true) : null}
         <Text style={styles.friendsTitle}>Друзья</Text>
-        {friends.length ? (
+        {!isGuest && friends.length ? (
           friends.map(friend => (
             <Pressable key={friend.username} onPress={() => setSelectedProfile(friend)}>
               {profileCard(friend)}
             </Pressable>
           ))
         ) : (
-          <Text style={styles.empty}>Список друзей пуст или профили не заполнены на сервере.</Text>
+          <Text style={styles.empty}>
+            {isGuest ? 'В гостевом режиме друзья скрыты.' : 'Список друзей пуст или профили не заполнены на сервере.'}
+          </Text>
         )}
       </ScrollView>
 

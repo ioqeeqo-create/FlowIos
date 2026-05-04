@@ -12,8 +12,10 @@ type LoginResult = { ok: boolean; error?: string };
 type SocialAuthContextValue = {
   ready: boolean;
   username: string | null;
+  isGuest: boolean;
   login: (username: string, password: string) => Promise<LoginResult>;
   register: (username: string, password: string) => Promise<LoginResult>;
+  enterGuest: () => Promise<void>;
   logout: () => Promise<void>;
   syncProfileMedia: (username: string) => Promise<void>;
 };
@@ -50,6 +52,7 @@ export function SocialAuthProvider({ children }: { children: React.ReactNode }) 
   } = useFlowSettings();
   const [ready, setReady] = useState(false);
   const [username, setUsername] = useState<string | null>(null);
+  const isGuest = username === 'guest';
 
   useEffect(() => {
     let cancelled = false;
@@ -156,9 +159,15 @@ export function SocialAuthProvider({ children }: { children: React.ReactNode }) 
     setUsername(null);
   }, []);
 
+  const enterGuest = useCallback(async () => {
+    await AsyncStorage.setItem(K.username, 'guest');
+    setSocialUsername('guest');
+    setUsername('guest');
+  }, [setSocialUsername]);
+
   const value = useMemo(
-    () => ({ ready, username, login, register, logout, syncProfileMedia }),
-    [login, logout, ready, register, syncProfileMedia, username],
+    () => ({ ready, username, isGuest, login, register, enterGuest, logout, syncProfileMedia }),
+    [enterGuest, isGuest, login, logout, ready, register, syncProfileMedia, username],
   );
 
   return <SocialAuthContext.Provider value={value}>{children}</SocialAuthContext.Provider>;
