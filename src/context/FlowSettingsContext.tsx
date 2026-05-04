@@ -9,10 +9,68 @@ import React, {
 } from 'react';
 import type { SearchSource } from '../types/flowTrack';
 
-const DEFAULT_GATEWAY_BASE = 'http://85.239.34.229:3950';
-const DEFAULT_GATEWAY_SECRET = 'flowflow';
-const DEFAULT_SOCIAL_BASE = 'http://85.239.34.229:3847';
-const DEFAULT_SOCIAL_SECRET = 'flowflow';
+/** Публичный VPS: музыка только через Nginx `/mobile`, соц — `/social` (без прямых портов с телефона). */
+export const DEFAULT_GATEWAY_BASE = 'http://85.239.34.229/mobile';
+/** Экспорт для экранов: пустое поле секрета = этот же дефолт. */
+export const DEFAULT_GATEWAY_SECRET = 'flowflow';
+export const DEFAULT_SOCIAL_BASE = 'http://85.239.34.229/social';
+export const DEFAULT_SOCIAL_SECRET = 'flowflow';
+
+const LEGACY_HOST = '85.239.34.229';
+
+function migrateLegacyBase(raw: string, kind: 'gateway' | 'social') {
+  const v = String(raw || '').trim().replace(/\/$/, '');
+  if (!v) return '';
+  try {
+    const u = new URL(/^https?:\/\//i.test(v) ? v : `http://${v}`);
+    const host = u.hostname;
+    const port = u.port || '';
+    const path = (u.pathname || '/').replace(/\/$/, '') || '/';
+
+    if (kind === 'gateway') {
+      if (host === LEGACY_HOST && port === '3950') return DEFAULT_GATEWAY_BASE;
+      if (host === LEGACY_HOST && port === '3847') return DEFAULT_GATEWAY_BASE;
+      if (host === LEGACY_HOST && path === '/social') return DEFAULT_GATEWAY_BASE;
+    }
+    if (kind === 'social') {
+      if (host === LEGACY_HOST && port === '3847') return DEFAULT_SOCIAL_BASE;
+      if (host === LEGACY_HOST && port === '3950') return DEFAULT_SOCIAL_BASE;
+    }
+  } catch {
+    /* ignore */
+  }
+  if (kind === 'gateway' && v === `http://${LEGACY_HOST}:3950`) return DEFAULT_GATEWAY_BASE;
+  if (kind === 'social' && v === `http://${LEGACY_HOST}:3847`) return DEFAULT_SOCIAL_BASE;
+  return v;
+}
+
+/**
+ * Ввод только IP или `http(s)://host` без пути → добавляем префикс Nginx (`/mobile` или `/social`).
+ * Если в URL уже есть нестандартный порт — не меняем (локальная отладка).
+ */
+export function normalizeBareHostPublicBase(raw: string, kind: 'gateway' | 'social'): string {
+  const s = String(raw || '').trim();
+  if (!s) return '';
+  let v = s.replace(/\/+$/, '');
+  if (!/^https?:\/\//i.test(v)) v = `http://${v.replace(/^\/+/, '')}`;
+  try {
+    const u = new URL(v);
+    if (u.port) return v.replace(/\/$/, '');
+    const path = (u.pathname || '/').replace(/\/+$/, '') || '/';
+    if (path !== '/') return v.replace(/\/$/, '');
+    const ipv4 = /^\d{1,3}(\.\d{1,3}){3}$/;
+    if (!ipv4.test(u.hostname)) return v.replace(/\/$/, '');
+    const suffix = kind === 'gateway' ? '/mobile' : '/social';
+    return `${u.origin}${suffix}`.replace(/\/$/, '');
+  } catch {
+    return s;
+  }
+}
+
+function finalizePublicBase(raw: string, kind: 'gateway' | 'social'): string {
+  const n = normalizeBareHostPublicBase(raw, kind);
+  return migrateLegacyBase(n, kind) || n;
+}
 
 const K = {
   backgroundUri: 'flow:appearance:bg',
@@ -132,13 +190,21 @@ export function FlowSettingsProvider({ children }: { children: React.ReactNode }
           if (Number.isFinite(v) && v >= 0 && v <= 0.75) setBackgroundDimState(v);
         }
         if (m[K.fontId]) setFontIdState(m[K.fontId]!);
-        if (m[K.apiBase]) setApiBaseState(m[K.apiBase]!);
-        else setApiBaseState(DEFAULT_SOCIAL_BASE);
+        if (m[K.apiBase]) {
+          const next = finalizePublicBase(m[K.apiBase]!, 'social') || DEFAULT_SOCIAL_BASE;
+          setApiBaseState(next);
+          if (next !== m[K.apiBase]) await AsyncStorage.setItem(K.apiBase, next);
+        } else setApiBaseState(DEFAULT_SOCIAL_BASE);
         if (m[K.apiToken]) setApiTokenState(m[K.apiToken]!);
         else setApiTokenState(DEFAULT_SOCIAL_SECRET);
         if (m[K.socialUsername]) setSocialUsernameState(m[K.socialUsername]!);
-        if (m[K.gatewayBase]) setGatewayBaseState(m[K.gatewayBase]!);
+        if (m[K.gatewayBase]) {
+          const next = finalizePublicBase(m[K.gatewayBase]!, 'gateway') || DEFAULT_GATEWAY_BASE;
+          setGatewayBaseState(next);
+          if (next !== m[K.gatewayBase]) await AsyncStorage.setItem(K.gatewayBase, next);
+        }
         if (m[K.gatewaySecret]) setGatewaySecretState(m[K.gatewaySecret]!);
+        else setGatewaySecretState(DEFAULT_GATEWAY_SECRET);
         if (m[K.spotifyToken]) setSpotifyTokenState(m[K.spotifyToken]!);
         if (m[K.yandexToken]) setYandexTokenState(m[K.yandexToken]!);
         if (m[K.vkToken]) setVkTokenState(m[K.vkToken]!);
@@ -225,8 +291,15 @@ export function FlowSettingsProvider({ children }: { children: React.ReactNode }
 
   const setApiBase = useCallback(
     (v: string) => {
-      setApiBaseState(v);
-      void persist(K.apiBase, v.trim() || null);
+      const t = String(v || '').trim();
+      if (!t) {
+        setApiBaseState('');
+        void persist(K.apiBase, null);
+        return;
+      }
+      const next = finalizePublicBase(t, 'social') || DEFAULT_SOCIAL_BASE;
+      setApiBaseState(next);
+      void persist(K.apiBase, next);
     },
     [persist],
   );
@@ -259,8 +332,16 @@ export function FlowSettingsProvider({ children }: { children: React.ReactNode }
 
   const setGatewayBase = useCallback(
     (v: string) => {
-      setGatewayBaseState(v);
-      void persist(K.gatewayBase, v.trim() || null);
+      const t = String(v || '').trim();
+      if (!t) {
+        setGatewayBaseState('');
+        void persist(K.gatewayBase, null);
+        void clearGatewayTokenFlags();
+        return;
+      }
+      const next = finalizePublicBase(t, 'gateway') || DEFAULT_GATEWAY_BASE;
+      setGatewayBaseState(next);
+      void persist(K.gatewayBase, next);
       void clearGatewayTokenFlags();
     },
     [clearGatewayTokenFlags, persist],

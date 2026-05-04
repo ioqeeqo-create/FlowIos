@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { gatewayProbeSavedTokens } from '../api/flowGateway';
-import { useFlowSettings } from '../context/FlowSettingsContext';
+import { DEFAULT_GATEWAY_SECRET, useFlowSettings } from '../context/FlowSettingsContext';
 
 /**
  * После гидрации настроек — тихо проверяет /health шлюза и токены Яндекс/VK (если заданы).
@@ -12,13 +12,15 @@ export function GatewayTokenWarmup() {
 
   useEffect(() => {
     if (!s.hydrated || ran.current) return;
-    if (!s.gatewayBase.trim() || !s.gatewaySecret.trim()) return;
+    const base = s.gatewayBase.trim().replace(/\/$/, '');
+    if (!base || /\/social$/i.test(base)) return;
+    const secret = s.gatewaySecret.trim() || DEFAULT_GATEWAY_SECRET;
     ran.current = true;
 
     const t = setTimeout(() => {
       void (async () => {
         try {
-          const out = await gatewayProbeSavedTokens(s.gatewayBase, s.gatewaySecret, {
+          const out = await gatewayProbeSavedTokens(s.gatewayBase, secret, {
             yandexToken: s.yandexToken,
             vkToken: s.vkToken,
           });

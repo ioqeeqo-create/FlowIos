@@ -21,7 +21,7 @@ import {
 } from '../api/flowGateway';
 import { LiquidGlassPanel } from '../components/LiquidGlassPanel';
 import { fontFamilyForId } from '../constants/fontChoices';
-import { useFlowSettings } from '../context/FlowSettingsContext';
+import { DEFAULT_GATEWAY_SECRET, useFlowSettings } from '../context/FlowSettingsContext';
 import { usePlayback } from '../context/PlaybackContext';
 import type { FlowTrack, SearchSource } from '../types/flowTrack';
 
@@ -82,10 +82,15 @@ export function SearchScreen() {
     soundcloudClientId: s.soundcloudClientId,
   };
 
+  const gwSecret = useMemo(
+    () => s.gatewaySecret.trim() || DEFAULT_GATEWAY_SECRET,
+    [s.gatewaySecret],
+  );
+
   const gateReason = useMemo(() => {
-    if (!s.gatewayBase.trim() || !s.gatewaySecret.trim()) {
-      return 'В Настройках укажи URL и секрет шлюза.';
-    }
+    const base = s.gatewayBase.trim().replace(/\/$/, '');
+    if (!base) return 'В Настройках укажи URL шлюза (…/mobile).';
+    if (/\/social$/i.test(base)) return 'В URL шлюза указан /social — это Flow Social. Для музыки нужен …/mobile.';
     if (source === 'spotify' && !s.spotifyToken.trim()) {
       return 'Для Spotify введи access token в Настройках.';
     }
@@ -104,7 +109,6 @@ export function SearchScreen() {
     return null;
   }, [
     s.gatewayBase,
-    s.gatewaySecret,
     s.spotifyToken,
     s.vkToken,
     s.vkValidated,
@@ -131,13 +135,7 @@ export function SearchScreen() {
         setMsg('Mock-данные (USE_MOCK_SEARCH)');
         return;
       }
-      const r = await gatewaySearch(
-        s.gatewayBase,
-        s.gatewaySecret,
-        query,
-        source,
-        tokens,
-      );
+      const r = await gatewaySearch(s.gatewayBase, gwSecret, query, source, tokens);
       setTracks(r.tracks);
       setMsg(
         r.ok
@@ -150,7 +148,7 @@ export function SearchScreen() {
     } finally {
       setLoading(false);
     }
-  }, [gateReason, q, s.gatewayBase, s.gatewaySecret, source, tokens]);
+  }, [gateReason, gwSecret, q, s.gatewayBase, source, tokens]);
 
   const onPlay = useCallback(
     async (track: FlowTrack) => {
@@ -168,12 +166,7 @@ export function SearchScreen() {
       const key = `${track.source}:${track.id}`;
       setResolvingId(key);
       try {
-        const r = await gatewayResolve(
-          s.gatewayBase,
-          s.gatewaySecret,
-          track,
-          tokens,
-        );
+        const r = await gatewayResolve(s.gatewayBase, gwSecret, track, tokens);
         if (!r.ok || !r.url) {
           setMsg(r.error || 'Не удалось получить поток');
           return;
@@ -191,8 +184,8 @@ export function SearchScreen() {
       playTrack,
       playOrToggleTrack,
       openFullPlayer,
+      gwSecret,
       s.gatewayBase,
-      s.gatewaySecret,
       s.vkValidated,
       s.yandexValidated,
       tokens,

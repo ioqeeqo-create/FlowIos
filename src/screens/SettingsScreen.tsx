@@ -28,17 +28,20 @@ if (Platform.OS === 'ios') {
   LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
 }
 
+/** Дефолтный Bearer для соц API и секрет музыкального шлюза на твоём VPS. */
+const DEFAULT_FLOW_SECRET = 'flowflow';
+
 async function validateFlowSocialToken(
   base: string,
   token: string,
 ): Promise<{ ok: boolean; message: string }> {
   const b = base.trim().replace(/\/$/, '');
   if (!b) return { ok: false, message: 'Укажите URL сервера' };
-  if (!token.trim()) return { ok: false, message: 'Укажите токен (FLOW_SOCIAL_SECRET как Bearer)' };
+  const bearer = token.trim() || DEFAULT_FLOW_SECRET;
 
   const url = `${b}/flow-api/v1/profile-public/flow`;
   const res = await fetch(url, {
-    headers: { Authorization: `Bearer ${token.trim()}` },
+    headers: { Authorization: `Bearer ${bearer}` },
   });
 
   if (res.status === 401) {
@@ -158,11 +161,13 @@ export function SettingsScreen() {
 
   const onValidateSocial = useCallback(async () => {
     setValidateMsg(null);
+    const effectiveToken = localToken.trim() || DEFAULT_FLOW_SECRET;
     setApiBase(localBase);
-    setApiToken(localToken);
+    setApiToken(effectiveToken);
+    setLocalToken(effectiveToken);
     setValidating(true);
     try {
-      const r = await validateFlowSocialToken(localBase, localToken);
+      const r = await validateFlowSocialToken(localBase, effectiveToken);
       setValidateMsg(r.message);
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
@@ -170,13 +175,21 @@ export function SettingsScreen() {
     } finally {
       setValidating(false);
     }
-  }, [localBase, localToken, setApiBase, setApiToken]);
+  }, [localBase, localToken, setApiBase, setApiToken, setLocalToken]);
 
   const onCheckGateway = useCallback(async () => {
     setGatewayMsg(null);
     setBusyGateway(true);
     try {
-      const r = await gatewayCheck(gatewayBase, gatewaySecret);
+      const base = String(gatewayBase || '').trim();
+      if (/\/social\/?$/i.test(base)) {
+        setGatewayMsg(
+          'В «URL шлюза» указан адрес Flow Social (/social). Для музыки нужен шлюз: …/mobile (или :3950 напрямую).',
+        );
+        return;
+      }
+      const secret = gatewaySecret.trim() || DEFAULT_FLOW_SECRET;
+      const r = await gatewayCheck(base, secret);
       setGatewayMsg(r.message);
     } catch (e: unknown) {
       setGatewayMsg(e instanceof Error ? e.message : String(e));
@@ -189,11 +202,11 @@ export function SettingsScreen() {
     Alert.alert(
       'Шлюз не отвечает',
       [
-        'На VPS выполни:',
-        '1) cd flow-mobile-gateway && npm start',
-        '2) открой порт 3950 в firewall/панели VPS',
-        '3) проверь в Safari: http://85.239.34.229:3950/health',
-        'Должно вернуться {"ok":true}.',
+        'На VPS:',
+        '1) systemd: flow-mobile-gateway активен',
+        '2) Nginx: префикс /mobile → процесс шлюза',
+        '3) Safari на телефоне: http://85.239.34.229/mobile/health → {"ok":true}',
+        'В приложении URL шлюза должен быть …/mobile, не …/social.',
       ].join('\n'),
     );
   }, []);
@@ -397,12 +410,13 @@ export function SettingsScreen() {
           {openSections.gateway ? (
             <>
           <Text style={styles.hint}>
-            Запуск: <Text style={styles.mono}>FLOW_MOBILE_GATEWAY_SECRET=flowflow</Text>. По умолчанию уже рабочие значения.
+            Запуск: <Text style={styles.mono}>FLOW_MOBILE_GATEWAY_SECRET=flowflow</Text>. Это{' '}
+            <Text style={styles.mono}>/mobile</Text> (музыка), не путай с <Text style={styles.mono}>/social</Text>.
           </Text>
           <Text style={styles.label}>URL шлюза</Text>
           <TextInput
             style={styles.inputGlass}
-            placeholder="http://192.168.1.5:3950"
+            placeholder="http://85.239.34.229/mobile"
             placeholderTextColor="rgba(255,255,255,0.38)"
             autoCapitalize="none"
             autoCorrect={false}
@@ -531,12 +545,14 @@ export function SettingsScreen() {
           {openSections.social ? (
             <>
         <Text style={styles.hint}>
-          Как в десктопе: база и FLOW_SOCIAL_SECRET. Проверка — GET …/flow-api/v1/profile-public/flow
+          База: лучше <Text style={styles.mono}>http://IP/social</Text> через Nginx:80 — с телефона порт{' '}
+          <Text style={styles.mono}>:3847</Text> часто закрыт снаружи. Токен пустой = подставится{' '}
+          <Text style={styles.mono}>flowflow</Text>.
         </Text>
         <Text style={styles.label}>URL сервера</Text>
         <TextInput
           style={styles.input}
-          placeholder="https://…:3847"
+          placeholder="http://85.239.34.229/social"
           placeholderTextColor="#6b7280"
           autoCapitalize="none"
           value={localBase}

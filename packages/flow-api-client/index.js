@@ -1,9 +1,15 @@
 /**
  * @flow/api-client — изолированное «ядро» HTTP для Flow Mobile Gateway.
  * Не зависит от Electron / React Native: только fetch (в Node 18+ есть глобальный fetch).
+ *
+ * Ожидаемый публичный baseUrl (с телефона): http://<VPS>/mobile — Nginx проксирует на процесс шлюза.
+ * Прямой порт шлюза на VPS не используется в клиенте.
  */
 
 'use strict'
+
+const DEFAULT_FETCH_TIMEOUT_MS = 20000
+const HEALTH_FETCH_TIMEOUT_MS = 16000
 
 function normalizeGatewayBase(raw) {
   let s = String(raw || '')
@@ -14,15 +20,15 @@ function normalizeGatewayBase(raw) {
   return s.replace(/\/$/, '')
 }
 
-function describeNetworkError(error, url) {
+function describeNetworkError(error, url, timeoutMs = DEFAULT_FETCH_TIMEOUT_MS) {
   const raw = error && error.message ? String(error.message) : String(error || '')
   if (/abort/i.test(raw)) {
-    return `Шлюз не ответил за 8 секунд: ${url}`
+    return `Шлюз не ответил за ~${Math.round(timeoutMs / 1000)} с: ${url}`
   }
-  return `Шлюз не отвечает: ${url}. На сервере запусти gateway, открой порт 3950 в firewall/панели VPS и проверь /health в Safari.${raw ? ` (${raw})` : ''}`
+  return `Шлюз не отвечает: ${url}. Открой этот URL в Safari. С телефона нужен Nginx-путь …/mobile (порт 80), не прямой доступ к процессу на VPS.${raw ? ` (${raw})` : ''}`
 }
 
-async function fetchWithTimeout(fetchImpl, url, options = {}, timeoutMs = 8000) {
+async function fetchWithTimeout(fetchImpl, url, options = {}, timeoutMs = DEFAULT_FETCH_TIMEOUT_MS) {
   if (typeof AbortController !== 'function') {
     return fetchImpl(url, options)
   }
@@ -51,14 +57,19 @@ function createFlowGatewayClient(cfg) {
 
   async function post(path, body) {
     const url = `${base.replace(/\/$/, '')}${path}`
-    return fetchWithTimeout(fetchImpl, url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${secret}`,
+    return fetchWithTimeout(
+      fetchImpl,
+      url,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${secret}`,
+        },
+        body: JSON.stringify(body ?? {}),
       },
-      body: JSON.stringify(body ?? {}),
-    })
+      DEFAULT_FETCH_TIMEOUT_MS,
+    )
   }
 
   return {
@@ -72,11 +83,11 @@ function createFlowGatewayClient(cfg) {
       if (!base) return { ok: false, error: 'Пустой baseUrl' }
       const url = `${base}/health`
       try {
-        const r = await fetchWithTimeout(fetchImpl, url, { method: 'GET' })
+        const r = await fetchWithTimeout(fetchImpl, url, { method: 'GET' }, HEALTH_FETCH_TIMEOUT_MS)
         const j = await r.json().catch(() => ({}))
         return { ok: r.ok && j.ok === true, status: r.status, body: j }
       } catch (e) {
-        return { ok: false, error: describeNetworkError(e, url) }
+        return { ok: false, error: describeNetworkError(e, url, HEALTH_FETCH_TIMEOUT_MS) }
       }
     },
 
@@ -100,10 +111,7 @@ function createFlowGatewayClient(cfg) {
       if (r.networkError) {
         return {
           ok: false,
-          message: describeNetworkError(
-            r.networkError,
-            `${base}/mobile/v1/search`,
-          ),
+          message: describeNetworkError(r.networkError, `${base}/mobile/v1/search`, DEFAULT_FETCH_TIMEOUT_MS),
           health,
         }
       }

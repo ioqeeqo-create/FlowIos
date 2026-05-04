@@ -69,7 +69,7 @@ export function SocialAuthProvider({ children }: { children: React.ReactNode }) 
     };
   }, []);
 
-  const base = String(apiBase || 'http://85.239.34.229:3847').trim().replace(/\/$/, '');
+  const base = String(apiBase || 'http://85.239.34.229/social').trim().replace(/\/$/, '');
   const bearer = String(apiToken || 'flowflow').trim();
 
   const syncProfileMedia = useCallback(
