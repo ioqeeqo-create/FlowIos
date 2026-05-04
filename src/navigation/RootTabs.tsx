@@ -3,6 +3,7 @@ import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import React from 'react';
 import { Animated, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import Svg, { Circle, Defs, LinearGradient, Stop } from 'react-native-svg';
 import { GlassDock } from '../components/GlassDock';
 import { MiniPlayer } from '../components/MiniPlayer';
 import {
@@ -53,7 +54,64 @@ const NavTheme = {
 
 function tabSlot(focused: boolean, node: React.ReactNode) {
   return (
-    <View style={[styles.tabGlyphWrap, focused && styles.tabGlyphWrapActive]}>{node}</View>
+    <View style={[styles.tabGlyphWrap, focused && styles.tabGlyphWrapActive]}>
+      {focused ? <AnimatedChromeRing /> : null}
+      <View style={styles.tabIconLayer}>{node}</View>
+    </View>
+  );
+}
+
+function AnimatedChromeRing() {
+  const spin = React.useRef(new Animated.Value(0)).current;
+
+  React.useEffect(() => {
+    const loop = Animated.loop(
+      Animated.timing(spin, {
+        toValue: 1,
+        duration: 2600,
+        useNativeDriver: true,
+      }),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [spin]);
+
+  return (
+    <Animated.View
+      pointerEvents="none"
+      style={[
+        styles.chromeRing,
+        {
+          transform: [
+            {
+              rotate: spin.interpolate({
+                inputRange: [0, 1],
+                outputRange: ['0deg', '360deg'],
+              }),
+            },
+          ],
+        },
+      ]}>
+      <Svg width="100%" height="100%" viewBox="0 0 48 48">
+        <Defs>
+          <LinearGradient id="activeIconChrome" x1="0" y1="6" x2="48" y2="42">
+            <Stop offset="0" stopColor="#a855f7" stopOpacity="0.96" />
+            <Stop offset="0.35" stopColor="#38bdf8" stopOpacity="0.94" />
+            <Stop offset="0.68" stopColor="#ec4899" stopOpacity="0.96" />
+            <Stop offset="1" stopColor="#f8fafc" stopOpacity="0.82" />
+          </LinearGradient>
+        </Defs>
+        <Circle
+          cx="24"
+          cy="24"
+          r="19.5"
+          fill="none"
+          stroke="url(#activeIconChrome)"
+          strokeWidth="2.4"
+          strokeLinecap="round"
+        />
+      </Svg>
+    </Animated.View>
   );
 }
 
@@ -252,12 +310,12 @@ export function RootTabs() {
 
 const styles = StyleSheet.create({
   tabsRow: {
-    height: Platform.OS === 'ios' ? 58 : 62,
+    height: Platform.OS === 'ios' ? 62 : 64,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 6,
+    paddingHorizontal: 12,
     paddingTop: 6,
-    paddingBottom: 5,
+    paddingBottom: 7,
   },
   tabButton: {
     flex: 1,
@@ -267,9 +325,9 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   tabGlyphWrap: {
-    minWidth: 36,
-    minHeight: 28,
-    borderRadius: 18,
+    width: 48,
+    height: 40,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -278,6 +336,18 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.45,
     shadowRadius: 7,
+  },
+  tabIconLayer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 2,
+  },
+  chromeRing: {
+    position: 'absolute',
+    width: 48,
+    height: 48,
+    top: -4,
+    left: 0,
   },
   tabLabel: {
     maxWidth: 72,
