@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { launchImageLibrary } from 'react-native-image-picker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Svg, { Defs, LinearGradient, Path, Stop } from 'react-native-svg';
 import {
   gatewayCheck,
   gatewayValidateVk,
@@ -155,6 +156,19 @@ export function SettingsScreen() {
     }
   }, [gatewayBase, gatewaySecret]);
 
+  const onShowGatewayHelp = useCallback(() => {
+    Alert.alert(
+      'Шлюз не отвечает',
+      [
+        'На VPS выполни:',
+        '1) cd flow-mobile-gateway && npm start',
+        '2) открой порт 3950 в firewall/панели VPS',
+        '3) проверь в Safari: http://85.239.34.229:3950/health',
+        'Должно вернуться {"ok":true}.',
+      ].join('\n'),
+    );
+  }, []);
+
   const onValidateYandex = useCallback(async () => {
     setValYandexMsg(null);
     setBusyY(true);
@@ -222,28 +236,36 @@ export function SettingsScreen() {
         keyboardShouldPersistTaps="handled"
         automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
         keyboardDismissMode="interactive">
-        <Text style={styles.section}>Оформление</Text>
-        <Text style={styles.hint}>
-          Фото и GIF из галереи — фон и обложка в шапке «Моя волна».
-        </Text>
-        <View style={styles.row}>
-          <Pressable style={styles.btn} onPress={() => pickMedia('bg')}>
-            <Text style={styles.btnText}>Фон экрана</Text>
+        <LiquidGlassPanel
+          intensity="chrome"
+          style={styles.appearanceGlass}
+          contentStyle={styles.appearanceContent}>
+          <GlassWave />
+          <Text style={styles.section}>Оформление</Text>
+          <Text style={styles.hint}>
+            Фото и GIF из галереи — фон и обложка в шапке «Моя волна».
+          </Text>
+          <View style={styles.row}>
+            <Pressable style={styles.btnGlass} onPress={() => pickMedia('bg')}>
+              <Text style={styles.btnText}>Фон экрана</Text>
+            </Pressable>
+            <Pressable style={styles.btnGlass} onPress={() => pickMedia('cover')}>
+              <Text style={styles.btnText}>Обложка</Text>
+            </Pressable>
+          </View>
+          <Text style={styles.meta}>
+            {backgroundUri ? 'Фон: да' : 'Фон: нет'} · {coverUri ? 'Обложка: да' : 'Обложка: нет'}
+          </Text>
+          <Pressable style={styles.btnDanger} onPress={onResetLook}>
+            <Text style={styles.btnDangerText}>Сбросить оформление</Text>
           </Pressable>
-          <Pressable style={styles.btn} onPress={() => pickMedia('cover')}>
-            <Text style={styles.btnText}>Обложка</Text>
-          </Pressable>
-        </View>
-        <Text style={styles.meta}>
-          {backgroundUri ? 'Фон: да' : 'Фон: нет'} · {coverUri ? 'Обложка: да' : 'Обложка: нет'}
-        </Text>
-        <Pressable style={styles.btnDanger} onPress={onResetLook}>
-          <Text style={styles.btnDangerText}>Сбросить оформление</Text>
-        </Pressable>
+        </LiquidGlassPanel>
 
         <LiquidGlassPanel
+          intensity="chrome"
           style={styles.gatewayGlass}
           contentStyle={styles.gatewayGlassContent}>
+          <GlassWave />
           <Text style={styles.section}>Шлюз музыки (Node на VPS/ПК)</Text>
           <Text style={styles.hint}>
             Запуск: в папке flow_fixed —{' '}
@@ -285,6 +307,11 @@ export function SettingsScreen() {
             )}
           </Pressable>
           {gatewayMsg ? <Text style={styles.smallMsg}>{gatewayMsg}</Text> : null}
+          {gatewayMsg && gatewayMsg !== 'Шлюз доступен, секрет принят' ? (
+            <Pressable style={styles.helpBtn} onPress={onShowGatewayHelp}>
+              <Text style={styles.helpBtnText}>Что сделать на VPS?</Text>
+            </Pressable>
+          ) : null}
           {gatewayMsg === 'Шлюз доступен, секрет принят' ? (
             <Text style={styles.okBadge}>Шлюз: подключен</Text>
           ) : null}
